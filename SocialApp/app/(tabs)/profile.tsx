@@ -1,10 +1,17 @@
 import { Text, View, StyleSheet } from "react-native";
 import { Link } from "expo-router";
+import { useAuth } from "../../lib/auth";
+import { Button } from "react-native-paper";
 
 export default function Profile() {
+  const { user, isLoadingUser, signOut } = useAuth();
+
   return (
     <View style={styles.view}>
-      <Text>Profile</Text>
+      <Text>
+        {user ? "true" : "false"}
+      </Text>
+      <Button onPress={signOut}>Sign out</Button>
     </View>
   );
 }

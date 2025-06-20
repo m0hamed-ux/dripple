@@ -4,9 +4,10 @@ import Post from "../../components/post";
 export default function Home() {
   return (
     <View style={styles.view}>
-      <Text>Welcome to the Social App!</Text>
+      <Text >Welcome to the Social App!</Text>
       <View id="postView" style={{
         width: "100%",
+        padding: 0,
       }}>
         <Post />
         <Post />
@@ -22,7 +23,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 0,
     backgroundColor: "white",
   }
 });

@@ -1,28 +1,34 @@
 import { Text, View } from "react-native";
 import { useFonts } from 'expo-font';
-import { useRouter } from "expo-router";
+import { useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
+import { useAuth } from "../lib/auth";
 
 export default function Home() {
     const [fontsLoaded] = useFonts({
         'logoFont': require('../assets/fonts/Rubik-LightItalic.ttf'),
     });
     const router = useRouter();
-    const isAuth = false;
-
+    const {user, isLoadingUser} = useAuth();
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            if (isAuth) {
+        let Times = 0
+        const timeout = setInterval(() => {
+            if (user && !isLoadingUser) {
                 router.replace("../(tabs)/home");
                 return;
-            } else {
+            } else if (!user && !isLoadingUser) {
                 router.replace("../login");
                 return;
             }
-        }, 3000);
+            if (Times > 5) {
+                router.replace("../login");
+                return;
+            }
+            Times++;
+        }, 1000);
 
         return () => clearTimeout(timeout);
-    }, [router]);
+    }, [router, user]);
 
     return (
         <View style={{

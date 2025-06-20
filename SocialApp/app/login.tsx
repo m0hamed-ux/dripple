@@ -3,6 +3,7 @@ import { Text, TextInput, Button } from "react-native-paper";
 import { useFonts } from 'expo-font';
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { useAuth } from "../lib/auth";
 
 export default function Login() {
     const [fontsLoaded] = useFonts({
@@ -10,6 +11,51 @@ export default function Login() {
         'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
     });
     const [isSignUp, setIsSignUp] = useState<boolean>(false);
+    const [email, setEmail] = useState<string>("");
+    const [password, setPassword] = useState<string>("");
+    const [confirmPassword, setConfirmPassword] = useState<string>("");
+    const [error, setError] = useState<string | null>(null);
+    const {signUp, signIn} = useAuth();
+    const router = useRouter();
+    const handleAuth = async () => {
+        if(!email || !password) {
+            setError("يرجى ملء جميع الحقول");
+            return;
+        }
+        if (!isSignUp && password !== confirmPassword) {
+            setError("كلمات المرور غير متطابقة");
+            return;
+        }
+        if (!isSignUp && !confirmPassword) {
+            setError("يرجى تأكيد كلمة المرور");
+            return;
+        }
+        if (!isSignUp && password.length < 8) {
+            setError("يجب أن تكون كلمة المرور 8 أحرف على الأقل");
+            return;
+        }
+        if (!email.includes("@")) {
+            setError("يرجى إدخال بريد إلكتروني صالح");
+            return;
+        }
+        setError(null);
+        
+        if(!isSignUp) {
+            const error = await signUp(email, password);
+            if (error) {
+                setError(error);
+                return;
+            }
+            router.replace("/(tabs)/home");
+        } else {
+            const error = await signIn(email, password);
+            if (error) {
+                setError(error);
+                return;
+            }
+            router.replace("/(tabs)/home");
+        }
+    }
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
             <View style={{
@@ -39,6 +85,7 @@ export default function Login() {
                     activeOutlineColor="#ff3c00"
                     textAlign="center"
                     style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 10}}
+                    onChangeText={(text) => (setEmail(text), setError(null))}
                 />
                 <TextInput
                     label="كلمة المرور"
@@ -48,6 +95,7 @@ export default function Login() {
                     mode="outlined"
                     activeOutlineColor="#ff3c00"
                     style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 15}}
+                    onChangeText={(text) => (setPassword(text), setError(null))}
                 />
                 {!isSignUp && (
                     <TextInput
@@ -58,6 +106,7 @@ export default function Login() {
                         mode="outlined"
                         activeOutlineColor="#ff3c00"
                         style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 15}}
+                        onChangeText={(text) => (setConfirmPassword(text), setError(null))}
                     />
                 )}
                 {isSignUp && (
@@ -73,6 +122,7 @@ export default function Login() {
                         // router.replace("./forgot-password");
                     }}>نسيت كلمة المرور؟</Text>
                 )}
+                
                 <Button style={{
                     width: "100%",
                     backgroundColor: "#ff3c00",
@@ -82,11 +132,22 @@ export default function Login() {
                     marginTop: 0,
                 }} mode="contained" 
                 onPress={() => {
-                    const router = useRouter();
-                    router.replace("../(tabs)/home");
+                    handleAuth();
                 }}>
                     <Text style={{fontFamily: "Rubik-Regular", color: "white"}}>{isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 </Button>
+                {error && (
+                    <Text style={{
+                        fontFamily: "Rubik-Regular",
+                        textAlign: "center",
+                        color: "red",
+                        marginBottom: 10,
+                        padding: 10,
+                        backgroundColor: "#ffe6e6",
+                        borderRadius: 5,
+                        marginTop: 10,
+                    }}>{error}</Text>
+                )}
                 <Text style={{
                     fontFamily: "Rubik-Regular",
                     textAlign: "center",
