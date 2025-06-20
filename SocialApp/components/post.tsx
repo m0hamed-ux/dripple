@@ -1,44 +1,140 @@
-import { Text, View } from "react-native";
+import { Text, View, StyleSheet, Image } from "react-native";
+import { useFonts } from 'expo-font';
+import { Heart, ChatTeardrop, ShareFat  } from "phosphor-react-native";
 
-export default function Post() {
+type PostProps = {
+  image?: string | Array<string>;
+};
+export default function Post({ image }: PostProps) {
+  const [fontsLoaded] = useFonts({
+      'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
+      'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
+    });
   return (
     <View style={{
-      backgroundColor: "#fff",
-      borderRadius: 12,
-      padding: 8,
-      margin: 0,
-      flexDirection: "row",
-      alignItems: "flex-start"
-    }}>
-      {/* Avatar */}
-      <View style={{
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: "#eee",
-        marginRight: 12,
-        justifyContent: "center",
-        alignItems: "center"
-      }}>
-        <Text style={{ fontWeight: "bold", fontSize: 22, color: "#888" }}>A</Text>
+      width: "auto",
+      display: "flex",
+      flexDirection: "row-reverse",
+      padding: 2,
+      borderBottomColor: "#E0E0E050",
+      borderBottomWidth: 1,
+      marginTop: 4,
+    }}
+    >
+      <View id="avatarFrame"
+        style={{
+          width: "20%",
+          alignItems: "center",
+        }}
+      >
+        <Image
+          source={{ uri: 'https://www.catholicsingles.com/wp-content/uploads/2020/06/blog-header-3.png' }}
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 10,
+            overflow: "hidden",
+          }}
+        />
       </View>
-      {/* Post Content */}
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
-          <Text style={{ fontWeight: "bold", fontSize: 16, marginRight: 6 }}>Alice</Text>
-          <Text style={{ color: "#888", fontSize: 14 }}>@alice</Text>
-          <Text style={{ color: "#888", fontSize: 14, marginLeft: 6 }}>· 2h</Text>
-        </View>
-        <Text style={{ fontSize: 16, marginBottom: 10 }}>
-          This is an example tweet! 🚀 #reactnative #twitterclone
-        </Text>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 4 }}>
-          <Text style={{ color: "#888", fontSize: 14 }}>💬 12</Text>
-          <Text style={{ color: "#888", fontSize: 14 }}>🔁 8</Text>
-          <Text style={{ color: "#888", fontSize: 14 }}>❤️ 34</Text>
-          <Text style={{ color: "#888", fontSize: 14 }}>🔗</Text>
+      <View id="contentFrame" style={{
+        flex: 1,
+        alignItems: "flex-end",
+        padding: 0,
+      }}>
+        <Text style={{
+          fontSize: 16,
+          fontFamily: "Rubik-Medium",
+          marginBottom: 0,
+        }}>Mohamed</Text>
+        <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>منذ ساعتين</Text>
+        <Text style={{
+          fontSize: 14,
+          fontFamily: "Rubik-Regular",
+          marginBottom: 4,
+        }}>هذا منشور بسيط باللغة العربية. </Text>
+        {typeof image === "string" && (
+          <Image
+            source={{ uri: image }}
+            style={{
+              width: "100%",
+              aspectRatio: 1,
+              borderRadius: 10,
+              overflow: "hidden",
+              marginBottom: 4,
+            }}
+            resizeMode="cover"
+          />
+        )}
+        {Array.isArray(image) && (
+          <View
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 4,
+              marginBottom: 4,
+            }}
+          >
+            {image.map((img, index) => (
+              <Image
+                key={index}
+                source={{ uri: img }}
+                style={{
+                  flexBasis: "48%",
+                  flexGrow: 1,
+                  flexShrink: 1,
+                  aspectRatio: 1,
+                  height: 150,
+                  borderRadius: 10,
+                  overflow: "hidden",
+                }}
+                resizeMode="cover"
+              />
+            ))}
+          </View>
+        )}
+        <View style={{
+          width: "100%",
+          height: 20,
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "flex-end",
+          gap: 20,
+          alignItems: "center",
+          borderRadius: 10,
+          marginBottom: 4,
+          marginTop: 4,
+        }}>
+            <View style={styles.iconFrame}>
+              <ShareFat  size={20} color="gray" />
+              <Text style={styles.countText}>100</Text>
+            </View>
+            <View style={styles.iconFrame}>
+              <ChatTeardrop  size={20} color="gray" />
+              <Text style={styles.countText}>100</Text>
+            </View>
+            <View style={styles.iconFrame}>
+              <Heart size={20} color="gray" />
+              <Text style={styles.countText}>100</Text>
+            </View>
+
         </View>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  iconFrame: {
+    display: "flex",
+    flexDirection: "row-reverse",
+    justifyContent: "space-around",
+    alignItems: "center",
+  },
+  countText: {
+    color: "gray",
+    fontSize: 12,
+  }
+});
