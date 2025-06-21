@@ -1,8 +1,27 @@
 import { Text, View, StyleSheet, ScrollView} from "react-native";
 import Post from "../../components/post";
 import Story from "../../components/story";
+import { databases, databaseId, postsCollectionId } from "@/lib/appwrite";
+import { useState, useEffect } from "react";
+import { PostType } from "@/types/database.type";
 
 export default function Home() {
+  const [posts, setposts] = useState<PostType[]>();
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+  const fetchPosts = async () => {
+    try {
+      const respond = await databases.listDocuments(
+        databaseId,
+        postsCollectionId,
+      );
+
+      setposts(respond.documents as PostType[]);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  }
   return (
     <ScrollView showsVerticalScrollIndicator={false} >
       <View style={styles.view}>
@@ -46,22 +65,13 @@ export default function Home() {
           width: "100%",
           padding: 0,
         }}>
-          <Post image={[
-            "https://static.vecteezy.com/system/resources/thumbnails/036/324/708/small/ai-generated-picture-of-a-tiger-walking-in-the-forest-photo.jpg",
-            "https://static.vecteezy.com/system/resources/thumbnails/036/324/708/small/ai-generated-picture-of-a-tiger-walking-in-the-forest-photo.jpg",
-            "https://static.vecteezy.com/system/resources/thumbnails/036/324/708/small/ai-generated-picture-of-a-tiger-walking-in-the-forest-photo.jpg",
-          ]}/>
-          <Post image="https://static.vecteezy.com/system/resources/thumbnails/036/324/708/small/ai-generated-picture-of-a-tiger-walking-in-the-forest-photo.jpg"/>
-          <Post />
-          <Post />
-          <Post />
-          <Post />
-          <Post />
-          <Post />
-          <Post />
-          <Post />
-          <Post />
-          <Post />
+          {posts && posts.map((post) => (
+            <Post
+              key={post.$id}
+              content={post.content}
+              userID={post.userID}
+            />
+          ))}
         </View>
       
       </View>

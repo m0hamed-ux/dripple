@@ -1,11 +1,35 @@
 import { Text, View, StyleSheet, Image } from "react-native";
 import { useFonts } from 'expo-font';
 import { Heart, ChatTeardrop, ShareFat  } from "phosphor-react-native";
+import { account } from "../lib/appwrite";
+import { useState, useEffect } from "react";
+import { UserType } from "../types/database.type";
+import { databases, databaseId, usersCollectionId } from "../lib/appwrite";
+import { Query } from "react-native-appwrite";
 
 type PostProps = {
   image?: string | Array<string>;
+  video?: string;
+  content: string;
+  userID: string;
 };
-export default function Post({ image }: PostProps) {
+export default function Post({ image, video, content, userID }: PostProps) {
+  const [author, setAuthor] = useState<UserType[]>();
+  useEffect(() => {
+    getAuthor();
+  }, [userID]);
+  const getAuthor = async () => {
+    try {
+      const respond = await databases.listDocuments(
+        databaseId,
+        usersCollectionId,
+        [Query.equal('userID', userID)]
+      );
+      setAuthor(respond.documents as UserType[]);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    }
+  }
   const [fontsLoaded] = useFonts({
       'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
       'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
@@ -28,7 +52,7 @@ export default function Post({ image }: PostProps) {
         }}
       >
         <Image
-          source={{ uri: 'https://www.catholicsingles.com/wp-content/uploads/2020/06/blog-header-3.png' }}
+          source={{ uri: author && author.length > 0 ? author[0].userProfile : ""}}
           style={{
             width: 50,
             height: 50,
@@ -46,13 +70,15 @@ export default function Post({ image }: PostProps) {
           fontSize: 16,
           fontFamily: "Rubik-Medium",
           marginBottom: 0,
-        }}>Mohamed</Text>
+        }}>
+          {author && author.length > 0 ? author[0].name : "مستخدم"}
+        </Text>
         <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>منذ ساعتين</Text>
         <Text style={{
           fontSize: 14,
           fontFamily: "Rubik-Regular",
           marginBottom: 4,
-        }}>هذا منشور بسيط باللغة العربية. </Text>
+        }}>{content}</Text>
         {typeof image === "string" && (
           <Image
             source={{ uri: image }}

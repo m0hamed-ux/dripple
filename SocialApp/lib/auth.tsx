@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { ID, Models } from "react-native-appwrite";
-import { account } from "./appwrite";
+import { account, usersCollectionId, databaseId, databases } from "./appwrite";
 
 
 type AuthContextType = {
@@ -38,12 +38,23 @@ export function Auth({children}: {children: React.ReactNode}){
                 password,
                 "Name"
             );
-            // const fcmToken = await messagingFirebase().getToken();
             await signIn(email, password);
             await account.updatePrefs({
                 profilePictureId: "test-profile-picture",
             });
             const user = await account.get();
+            const userId = user.$id;
+            await databases.createDocument(
+                databaseId,
+                usersCollectionId,
+                userId,
+                {
+                    userID: userId,
+                    username: "user_" + userId,
+                    name: user.name || "User",
+                }
+            )
+
 
             return null;
         } catch (error) {
