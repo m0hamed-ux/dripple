@@ -1,6 +1,6 @@
 import { useFonts } from 'expo-font';
 import { useVideoPlayer, VideoView, } from 'expo-video';
-import { ChatTeardrop, Heart, Play, ShareFat } from "phosphor-react-native";
+import { ChatTeardrop, Heart, Play } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
@@ -479,12 +479,12 @@ export default function Post({ postID, image, video, content, title, userID, lin
           marginBottom: 4,
           marginTop: 4,
         }}>
-            <View style={styles.iconFrame}>
+            {/* <View style={styles.iconFrame}>
               <ShareFat  size={20} color="gray" />
               <Text style={styles.countText}>
                 0
               </Text>
-            </View>
+            </View> */}
             <View style={styles.iconFrame}>
               <Pressable onPress={() => setCommentsVisible(true)}>
                 <ChatTeardrop size={20} color="gray" />
@@ -501,7 +501,7 @@ export default function Post({ postID, image, video, content, title, userID, lin
               ]}
             >
               {userLiked ? (
-              <Heart size={20} color="red" weight="fill" />
+              <Heart size={20} color='#0095f6' weight="fill" />
               ) : (
               <Heart size={20} color="gray" />
               )}
@@ -524,89 +524,130 @@ export default function Post({ postID, image, video, content, title, userID, lin
         >
           <View
             {...panResponderModal.panHandlers}
-            style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, minHeight: 300, maxHeight: '80%', padding: 20, flex: 1, justifyContent: 'flex-start', display: 'flex', flexDirection: 'column' }}
+            style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, minHeight: 300, maxHeight: '80%', paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0, flex: 1, justifyContent: 'flex-start', display: 'flex', flexDirection: 'column' }}
           >
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, width: "100%", textAlign: "center"}}>التعليقات</Text>
-            {commentsLoading ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="small" color="gray" style={{ marginVertical: 20 }} />
-              </View>
-            ) : commentsError ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: 'red' }}>{commentsError}</Text>
-              </View>
-            ) : comments.length === 0 ? (
-              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>لا توجد تعليقات بعد.</Text>
-              </View>
-            ) : (
-              <ScrollView style={{ maxHeight: "100%" }}>
-                {comments.map((comment, idx) => (
-                  <View key={comment.$id || idx} style={{ flexDirection: 'row-reverse', alignItems: 'flex-start', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 8 }}>
-                    <Image
-                      source={{ uri: comment.userID && typeof comment.userID === 'object' && comment.userID.userProfile ? comment.userID.userProfile : undefined }}
-                      style={{ width: 36, height: 36, borderRadius: 18, marginLeft: 10, backgroundColor: '#eee' }}
-                    />
-                    <View style={{ }}>
-                      <Text style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 2, textAlign:"right" }}>
-                        {typeof comment.userID === 'object'
-                          ? comment.userID.name || comment.userID.username
-                          : comment.userID}
-                      </Text>
-                      
-                      <Text style={{ fontSize: 10, color: 'gray', textAlign:"right" }}>{comment.$createdAt ? (() => {
-                        const now = new Date();
-                        const created = new Date(comment.$createdAt);
-                        const diffMs = now.getTime() - created.getTime();
-                        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-                        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-                        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                        if (diffDays < 7) {
-                          if (diffMinutes < 1) return "الآن";
-                          if (diffMinutes < 60) return `قبل ${diffMinutes} دقيقة`;
-                          if (diffHours < 24) {
-                            if (diffHours === 1) return "قبل ساعة";
-                            if (diffHours === 2) return "قبل ساعتين";
-                            if (diffHours < 11) return `قبل ${diffHours} ساعات`;
-                            return `قبل ${diffHours} ساعة`;
-                          }
-                          if (diffDays === 0) return "اليوم";
-                          if (diffDays === 1) return "قبل يوم";
-                          if (diffDays === 2) return "قبل يومين";
-                          if (diffDays < 10) return `قبل ${diffDays} أيام`;
-                        }
-                        return created.toLocaleDateString("ar-EG", {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        });
-                      })() : "تاريخ غير معروف"}</Text>
-                      <Text style={{ fontSize: 14, marginBottom: 2, textAlign:"right" }}>{comment.comment}</Text>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            )}
-            {/* Input for new comment */}
-            <View style={{ flexDirection: 'row-reverse', alignItems: 'center', marginTop: 10, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 10 }}>
-              <Image
-                source={{ uri: currentUser?.userProfile || undefined }}
-                style={{ width: 32, height: 32, borderRadius: 16, marginLeft: 8, backgroundColor: '#eee' }}
-              />
-              <TextInput
-                value={newComment}
-                onChangeText={setNewComment}
-                placeholder="أضف تعليقًا..."
-                style={{ flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, fontSize: 14, backgroundColor: '#fafafa', textAlign: 'right', alignSelf: "flex-end" }}
-                editable={!sendingComment}
-              />
-              <Pressable
-                onPress={handleSendComment}
-                disabled={sendingComment || !newComment.trim()}
-                style={{ marginLeft: 8, marginRight:8, opacity: sendingComment || !newComment.trim() ? 0.5 : 1 }}
-              >
-                <Text style={{ color: '#ff3c00', fontWeight: 'bold', fontSize: 16 }}>إرسال</Text>
+            {/* Top Bar */}
+            <View style={{ flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+              <Pressable onPress={() => setCommentsVisible(false)} style={{ position: 'absolute', right: 16, padding: 8 }}>
+                <Text style={{ fontSize: 22, color: '#222' }}></Text>
               </Pressable>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center', flex: 1, fontFamily: 'Rubik-Medium' }}>التعليقات</Text>
+            </View>
+            <View style={{ height: 1, backgroundColor: '#eee', marginBottom: 0 }} />
+
+            
+
+            {/* Comments List */}
+            <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 4 }}>
+              {commentsLoading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <ActivityIndicator size="small" color="gray" style={{ marginVertical: 20 }} />
+                </View>
+              ) : commentsError ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={{ color: 'red' }}>{commentsError}</Text>
+                </View>
+              ) : comments.length === 0 ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                  <Text>لا توجد تعليقات بعد.</Text>
+                </View>
+              ) : (
+                <ScrollView style={{ maxHeight: '100%' }} showsVerticalScrollIndicator={false}>
+                  {comments.map((comment, idx) => (
+                    <View key={comment.$id || idx}>
+                      <View style={{ flexDirection: 'row-reverse', alignItems: 'flex-start', marginBottom: 12 }}>
+                        <Image
+                          source={{ uri: comment.userID && typeof comment.userID === 'object' && comment.userID.userProfile ? comment.userID.userProfile : undefined }}
+                          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#eee', marginLeft: 10 }}
+                        />
+                        <View style={{ flex: 1 }}>
+                          <View style={{ display:"flex", flexDirection:"row-reverse", gap: 5, alignContent:"center" }}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{typeof comment.userID === 'object' ? comment.userID.name || comment.userID.username : comment.userID} </Text>
+                            <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10 }}>{comment.$createdAt ? (() => {
+                              const now = new Date();
+                              const created = new Date(comment.$createdAt);
+                              const diffMs = now.getTime() - created.getTime();
+                              const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                              if (diffDays < 7) {
+                                if (diffMinutes < 1) return "الآن";
+                                if (diffMinutes < 60) return `قبل ${diffMinutes} دقيقة`;
+                                if (diffHours < 24) {
+                                  if (diffHours === 1) return "قبل ساعة";
+                                  if (diffHours === 2) return "قبل ساعتين";
+                                  if (diffHours < 11) return `قبل ${diffHours} ساعات`;
+                                  return `قبل ${diffHours} ساعة`;
+                                }
+                                if (diffDays === 0) return "اليوم";
+                                if (diffDays === 1) return "قبل يوم";
+                                if (diffDays === 2) return "قبل يومين";
+                                if (diffDays < 10) return `قبل ${diffDays} أيام`;
+                              }
+                              return created.toLocaleDateString("ar-EG", {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              });
+                            })() : "تاريخ غير معروف"}</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row-reverse', alignItems: 'center', marginTop: 2 }}>
+                            
+                            
+                            {/* <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10 }}>3 إعجابات</Text> */}
+                            {/* <Text style={{ fontSize: 10, color: '#888' }}>رد</Text> */}
+                          </View>
+                          <View style={{
+                            display: "flex",
+                            flexDirection: "row-reverse",
+                            justifyContent: "space-between",
+                            alignContent: "center"
+                          }}>
+                            <Text style={{ fontSize: 14 }}>{comment.comment}</Text>
+                            <Pressable style={{ marginLeft: 10 }}>
+                              <Heart size={14} color="gray" />
+                            </Pressable>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={{ height: 1, backgroundColor: '#f2f2f2', marginVertical: 2 }} />
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
+            {/* Input for new comment */}
+            <View style={{ paddingHorizontal: 12, paddingBottom: 12, backgroundColor: '#fff' }}>
+            <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', marginBottom: 4, paddingHorizontal: 16, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#eee' }}>
+              {["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"].map((emoji) => (
+                <Pressable key={emoji} onPress={() => setNewComment(newComment + emoji)} style={{ marginHorizontal: 2 }}>
+                  <Text style={{ fontSize: 22 }}>{emoji}</Text>
+                </Pressable>
+              ))}
+            </View>
+              <View style={{ flexDirection: 'row-reverse', alignItems: 'center', paddingVertical: 8, backgroundColor: '#fff', borderRadius: 20 }}>
+                <Image
+                  source={{ uri: currentUser?.userProfile || undefined }}
+                  style={{ width: 32, height: 32, borderRadius: 16, marginLeft: 8, backgroundColor: '#eee' }}
+                />
+                <View style={{ flex: 1, backgroundColor: '#f2f2f2', borderRadius: 20, flexDirection: 'row-reverse', alignItems: 'center', paddingHorizontal: 12 }}>
+                  <TextInput
+                    value={newComment}
+                    onChangeText={setNewComment}
+                    placeholder="أضف تعليقًا..."
+                    style={{ flex: 1, fontSize: 14, paddingVertical: 8, backgroundColor: 'transparent', textAlign: 'right' }}
+                    editable={!sendingComment}
+                  />
+                  <Pressable
+                    onPress={handleSendComment}
+                    disabled={sendingComment || !newComment.trim()}
+                    style={{ opacity: sendingComment || !newComment.trim() ? 0.5 : 1, marginRight: 8 }}
+                  >
+                    <Text style={{ color: '#0095f6', fontWeight: 'bold', fontSize: 16 }}>إرسال</Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>

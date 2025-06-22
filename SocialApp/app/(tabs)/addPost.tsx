@@ -175,7 +175,7 @@ export default function AppPost() {
                     fontSize: 16,
                     fontFamily: "Rubik-Medium",
                     color: "white",
-                    backgroundColor: title.length < 3 || (mediaType == "link" && link == "") ? "#a3a3a3" : "red",
+                    backgroundColor: title.length < 3 || (mediaType == "link" && link == "") ? "#a3a3a3" : '#0095f6',
                     paddingHorizontal: 15,
                     paddingVertical: 2,
                     borderRadius: 15,
@@ -207,15 +207,15 @@ export default function AppPost() {
             <View style={{display: "flex", flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 10, paddingHorizontal: 10}}>
                 <Pressable onPress={
                     () => {pickImage()}} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
-                    <Images size={24} color={mediaType == "image"?"red":mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
+                    <Images size={24} color={mediaType == "image"?'#0095f6':mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
                 </Pressable>
 
                 <Pressable onPress={() => {pickVideo()}} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
-                    <Video size={24} color={mediaType == "video"?"red":mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
+                    <Video size={24} color={mediaType == "video"?'#0095f6':mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
                 </Pressable>
                 
                 <Pressable onPress={() => setMediaType(mediaType === "link" ? "none" : "link")} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
-                    <Link size={24} color={mediaType == "link"?"red":mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
+                    <Link size={24} color={mediaType == "link"?'#0095f6':mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
                 </Pressable>
             </View>
             {mediaType === "image" && (
@@ -248,7 +248,7 @@ export default function AppPost() {
                               zIndex: 1,
                             }}
                           >
-                            <Text style={{ color: "red", fontWeight: "bold", fontSize: 14 }}>×</Text>
+                            <Text style={{ color: '#0095f6', fontWeight: "bold", fontSize: 14 }}>×</Text>
                           </Pressable>
                         </View>
                     ))}
@@ -421,7 +421,7 @@ export default function AppPost() {
                 <Text style={{
                     fontFamily: "Rubik-Regular",
                     textAlign: "center",
-                    color: "red",
+                    color: '#0095f6',
                     marginBottom: 10,
                     padding: 10,
                     backgroundColor: "#ffe6e6",

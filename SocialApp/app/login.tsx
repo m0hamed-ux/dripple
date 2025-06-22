@@ -1,8 +1,8 @@
-import { KeyboardAvoidingView, Platform, View } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
 import { useFonts } from 'expo-font';
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
 import { useAuth } from "../lib/auth";
 
 export default function Login() {
@@ -140,7 +140,7 @@ export default function Login() {
                     <Text style={{
                         fontFamily: "Rubik-Regular",
                         textAlign: "center",
-                        color: "red",
+                        color: '#0095f6',
                         marginBottom: 10,
                         padding: 10,
                         backgroundColor: "#ffe6e6",

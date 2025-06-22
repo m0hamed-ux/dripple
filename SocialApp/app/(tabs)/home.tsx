@@ -75,7 +75,7 @@ export default function Home() {
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: "red",
+                  backgroundColor: '#0095f6',
                   borderWidth: 1,
                   borderColor: "white",
                 }}
@@ -91,7 +91,7 @@ export default function Home() {
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: "red",
+                  backgroundColor: '#0095f6',
                   borderWidth: 1,
                   borderColor: "white",
                 }}
@@ -108,12 +108,12 @@ export default function Home() {
               paddingBottom: 0,
             }}
           >
-            <Story />
-            <Story />
-            <Story />
-            <Story />
-            <Story />
-            <Story />
+            <Story image="https://randomuser.me/api/portraits/men/1.jpg" username="محمد" />
+            <Story image="https://randomuser.me/api/portraits/women/2.jpg" username="سارة" />
+            <Story image="https://randomuser.me/api/portraits/men/3.jpg" username="أحمد" />
+            <Story image="https://randomuser.me/api/portraits/women/4.jpg" username="ليلى" />
+            <Story image="https://randomuser.me/api/portraits/men/5.jpg" username="يوسف" />
+            <Story image="https://randomuser.me/api/portraits/women/6.jpg" username="هند" />
           </ScrollView>
         </View>
         <Text style={{
