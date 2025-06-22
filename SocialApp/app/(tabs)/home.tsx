@@ -133,6 +133,7 @@ export default function Home() {
           {posts && posts.map((post) => (
             <Post
               key={post.$id}
+              postID={post.$id}
               title={post.title}
               content={post.content}
               userID={post.userID}

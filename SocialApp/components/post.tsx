@@ -4,11 +4,13 @@ import { ArrowsOutSimple, ChatTeardrop, Heart, Play, ShareFat } from "phosphor-r
 import { useEffect, useRef, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { databaseId, databases, usersCollectionId } from "../lib/appwrite";
+import { account, databaseId, databases, usersCollectionId, likesCollectionId } from "../lib/appwrite";
 import { UserType } from "../types/database.type";
 
 
+
 type PostProps = {
+  postID: string;
   image?: string | Array<string>;
   video?: string;
   content?: string;
@@ -19,7 +21,7 @@ type PostProps = {
   isActive?: boolean;
   onPlay?: () => void;
 };
-export default function Post({ image, video, content, title, userID, link, createdAt, isActive, onPlay }: PostProps) {
+export default function Post({ postID, image, video, content, title, userID, link, createdAt, isActive, onPlay }: PostProps) {
   const videoLink = video && video.length > 0 ? video : "https://www.w3schools.com/html/mov_bbb.mp4";
   const player = useVideoPlayer(videoLink, (player) => {
     player.loop = true;
@@ -33,8 +35,12 @@ export default function Post({ image, video, content, title, userID, link, creat
     }
   }, [isActive, player]);
   const [author, setAuthor] = useState<UserType[]>();
+  const [likesCount, setLikesCount] = useState<number>(0);
+  const [userLiked, setUserLiked] = useState<boolean>(false);
   useEffect(() => {
     getAuthor();
+    getLikesCount();
+    isLiked();
   }, [userID]);
   const getAuthor = async () => {
     try {
@@ -52,6 +58,84 @@ export default function Post({ image, video, content, title, userID, link, creat
       'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
       'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
     });
+
+  const getLikesCount = async () => {
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        likesCollectionId,
+        [Query.equal('posts', postID)]
+      );
+      setLikesCount(response.documents.length);
+    } catch (error) {
+      console.error('Error fetching likes count:', error);
+      return 0;
+    }
+  }
+  const isLiked = async () => {
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        likesCollectionId,
+        [Query.equal('userID', await account.get().then((user) => user.$id))]
+      );
+      if (response.documents.length > 0) {
+        setUserLiked(true);
+        return true;
+      } else {
+        setUserLiked(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error checking if post is liked:', error);
+      return false;
+    }
+  }
+  const handleLike = async () => {
+    // Optimistic UI update
+    if (userLiked) {
+      setUserLiked(false);
+      setLikesCount((prevCount) => prevCount - 1);
+      try {
+        const response = await databases.listDocuments(
+          databaseId,
+          likesCollectionId,
+          [Query.equal('userID', await account.get().then((user) => user.$id)), Query.equal('posts', postID)]
+        );
+        if (response.documents.length > 0) {
+          await databases.deleteDocument(
+            databaseId,
+            likesCollectionId,
+            response.documents[0].$id
+          );
+        }
+      } catch (error) {
+        // Revert UI if failed
+        setUserLiked(true);
+        setLikesCount((prevCount) => prevCount + 1);
+        console.error('Error unliking post:', error);
+      }
+    } else {
+      setUserLiked(true);
+      setLikesCount((prevCount) => prevCount + 1);
+      try {
+        await databases.createDocument(
+          databaseId,
+          likesCollectionId,
+          'unique()',
+          {
+            userID: await account.get().then((user) => user.$id),
+            posts: postID,
+          }
+        );
+      } catch (error) {
+        // Revert UI if failed
+        setUserLiked(false);
+        setLikesCount((prevCount) => prevCount - 1);
+        console.error('Error liking post:', error);
+      }
+    }
+  };
   return (
     <View style={{
       width: "auto",
@@ -284,16 +368,30 @@ export default function Post({ image, video, content, title, userID, link, creat
         }}>
             <View style={styles.iconFrame}>
               <ShareFat  size={20} color="gray" />
-              <Text style={styles.countText}>100</Text>
+              <Text style={styles.countText}>
+                0
+              </Text>
             </View>
             <View style={styles.iconFrame}>
               <ChatTeardrop  size={20} color="gray" />
-              <Text style={styles.countText}>100</Text>
+              <Text style={styles.countText}>0</Text>
             </View>
-            <View style={styles.iconFrame}>
+            <Pressable
+              onPress={handleLike}
+              style={({ pressed }) => [
+                styles.iconFrame,
+                pressed && { transform: [{ scale: 0.85 }], opacity: 0.7 },
+              ]}
+            >
+              {userLiked ? (
+              <Heart size={20} color="red" weight="fill" />
+              ) : (
               <Heart size={20} color="gray" />
-              <Text style={styles.countText}>100</Text>
-            </View>
+              )}
+              <Text style={styles.countText}>
+              {likesCount > 0 ? likesCount : "0"}
+              </Text>
+            </Pressable>
 
         </View>
       </View>
