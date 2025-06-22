@@ -19,6 +19,8 @@ export default function AppPost() {
     const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
     const router = useRouter();
 
+
+    // Image
     const pickImage = async () => {
         if(image.length >= 4) {
             setError("يمكنك إضافة 4 صور كحد أقصى");
@@ -68,6 +70,51 @@ export default function AppPost() {
     }
     
 
+    // Video
+    const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
+    const pickVideo = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: 'video/*',
+                copyToCacheDirectory: true,
+                multiple: false,
+            });
+
+            if (result?.canceled) {
+                return;
+            }
+
+            const file = result.assets[0];
+            if (file && file.mimeType?.startsWith('video/')) {
+                setIsVideoLoading(true);
+                setMediaType('video');
+                try{
+                    await uploadVideo(file);
+                }catch(error) {
+                    alert(error)
+                }
+            }
+        } catch (error) {
+            alert('Error picking video: ' + error);
+        }
+    };
+    const uploadVideo = async (video: any) => {
+        await storage.createFile(
+            imagesStorageId,
+            ID.unique(),
+            {
+                uri: video.uri,
+                name: video.name,
+                type: video.mimeType,
+                size: video.size,
+            }
+        ).then((response) => {
+            const url = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=6854346600203ab09001&mode=admin`;
+            setIsVideoLoading(false);
+            setVideo(url);
+        })
+    }
+
     const addPost = async (content: String, title: String) => {
         try {
             await databases.createDocument(
@@ -80,6 +127,7 @@ export default function AppPost() {
                     content: content,
                     link: mediaType === "link" ? link : null,
                     images: mediaType === "image" && image.length > 0 ? image : null,
+                    video: mediaType === "video" && video.length > 1 ? video : null,
                 }
             );
             setContent("");
@@ -149,7 +197,7 @@ export default function AppPost() {
                     <Images size={24} color={mediaType == "image"?"red":mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
                 </Pressable>
 
-                <Pressable onPress={() => setMediaType(mediaType === "video" ? "none" : "video")} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
+                <Pressable onPress={() => {pickVideo()}} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
                     <Video size={24} color={mediaType == "video"?"red":mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
                 </Pressable>
                 
@@ -219,7 +267,73 @@ export default function AppPost() {
                             <Plus size={24} color="#a3a3a3" weight="bold"></Plus>
                         </Pressable>
                     )}
+                    
 
+
+                </View>
+            )}
+            {mediaType === "video" && (
+                <View style={{marginTop: 10, padding: 10, display: "flex", flexDirection: "row-reverse", gap: 10}}>
+                    {video && (
+                        <View style={{ position: "relative" }}>
+                          <Image
+                            source={{ uri: video }}
+                            style={{
+                              width: 50,
+                              height: 50,
+                              borderRadius: 10,
+                              overflow: "hidden",
+                            }}
+                          />
+                          <Pressable
+                            onPress={() => {
+                              setVideo("");
+                            }}
+                            style={{
+                              position: "absolute",
+                              top: 2,
+                              left: 2,
+                              backgroundColor: "rgba(255,255,255,0.8)",
+                              borderRadius: 10,
+                              width: 20,
+                              height: 20,
+                              alignItems: "center",
+                              justifyContent: "center",
+                              zIndex: 1,
+                            }}
+                          >
+                            <Text style={{ color: "red", fontWeight: "bold", fontSize: 14 }}>×</Text>
+                          </Pressable>
+                        </View>
+                    )}
+                    {isVideoLoading && (
+                        <View style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 10,
+                            overflow: "hidden",
+                            backgroundColor: "#eaeaea",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}>
+                            <SpinnerGap size={24} color="#a3a3a3" weight="bold" />
+                        </View>
+                    )}
+                    {!video && !isVideoLoading && (
+                        <Pressable style={{
+                            width: 50,
+                            height: 50,
+                            borderRadius: 10,
+                            overflow: "hidden",
+                            backgroundColor: "#eaeaea",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                         }} onPress={() => {pickVideo()}} >
+                            <Plus size={24} color="#a3a3a3" weight="bold"></Plus>
+                        </Pressable>
+                    )}
                 </View>
             )}
             {error && (

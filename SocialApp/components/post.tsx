@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, Image } from "react-native";
+import { Text, View, StyleSheet, Image,Pressable } from "react-native";
 import { useFonts } from 'expo-font';
 import { Heart, ChatTeardrop, ShareFat  } from "phosphor-react-native";
 import { account } from "../lib/appwrite";
@@ -7,6 +7,8 @@ import { UserType } from "../types/database.type";
 import { databases, databaseId, usersCollectionId } from "../lib/appwrite";
 import { Query } from "react-native-appwrite";
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { Play } from "phosphor-react-native";
+
 
 type PostProps = {
   image?: string | Array<string>;
@@ -189,25 +191,61 @@ export default function Post({ image, video, content, title, userID, link, creat
           </View>
         )}
         {video && (
-          <View style={{
+            <View style={{
             width: "100%",
-            height: 180,
+            aspectRatio: 1,
             backgroundColor: "#E0E0E050",
             borderRadius: 10,
             overflow: "hidden",
             marginBottom: 4,
-          }}>
+            }}>
             <VideoView
               player={player}
               style={{
-                // width: "100%",
-                height: "100%",
+              width: "100%",
+              height: "100%",
               }}
               allowsFullscreen
-              contentFit= "cover"
-              
+              contentFit="cover"
+              nativeControls={false}
             />
-          </View>
+            <View style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}>
+              <Pressable
+                onPress={() => {
+                  if (player.playing) {
+                    player.pause();
+                  } else {
+                    player.play();
+                  }
+                }}
+              >
+                {!player.playing && (
+                  <View 
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: "#00000080",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  >
+                  <Play size={24} color="#fff" weight="fill" />
+                  </View>
+                )}
+              </Pressable>
+              </View>
+            </View>
         )}
         <View style={{
           width: "100%",
