@@ -1,10 +1,10 @@
 import { useFonts } from 'expo-font';
-import { useVideoPlayer, VideoView,  } from 'expo-video';
-import { ArrowsOutSimple, ChatTeardrop, Heart, Play, ShareFat } from "phosphor-react-native";
+import { useVideoPlayer, VideoView, } from 'expo-video';
+import { ChatTeardrop, Heart, Play, ShareFat } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { account, databaseId, databases, usersCollectionId, likesCollectionId } from "../lib/appwrite";
+import { account, commentsCollectionId, databaseId, databases, likesCollectionId, usersCollectionId } from "../lib/appwrite";
 import { UserType } from "../types/database.type";
 
 
@@ -37,11 +37,46 @@ export default function Post({ postID, image, video, content, title, userID, lin
   const [author, setAuthor] = useState<UserType[]>();
   const [likesCount, setLikesCount] = useState<number>(0);
   const [userLiked, setUserLiked] = useState<boolean>(false);
+  const [commentsVisible, setCommentsVisible] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [newComment, setNewComment] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+
   useEffect(() => {
     getAuthor();
     getLikesCount();
     isLiked();
+    fetchComments();
   }, [userID]);
+
+  // Fetch comments when modal opens
+  useEffect(() => {
+    if (commentsVisible) {
+      fetchComments();
+    }
+  }, [commentsVisible]);
+
+  // Fetch current user for avatar
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await account.get();
+        const res = await databases.listDocuments(
+          databaseId,
+          usersCollectionId,
+          [Query.equal('userID', user.$id)]
+        );
+        setCurrentUser(res.documents[0] as UserType);
+      } catch (e) {
+        setCurrentUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const getAuthor = async () => {
     try {
       const respond = await databases.listDocuments(
@@ -74,10 +109,14 @@ export default function Post({ postID, image, video, content, title, userID, lin
   }
   const isLiked = async () => {
     try {
+      const user = await account.get();
       const response = await databases.listDocuments(
         databaseId,
         likesCollectionId,
-        [Query.equal('userID', await account.get().then((user) => user.$id))]
+        [
+          Query.equal('userID', user.$id),
+          Query.equal('posts', postID)
+        ]
       );
       if (response.documents.length > 0) {
         setUserLiked(true);
@@ -136,17 +175,91 @@ export default function Post({ postID, image, video, content, title, userID, lin
       }
     }
   };
+
+  // PanResponder for swipe up
+  // const panResponder = useRef(
+  //   PanResponder.create({
+  //     onMoveShouldSetPanResponder: (_, gestureState) => {
+  //       // Detect vertical swipe up
+  //       return gestureState.dy < -20;
+  //     },
+  //     onPanResponderRelease: (_, gestureState) => {
+  //       if (gestureState.dy < -40) {
+  //         setCommentsVisible(true);
+  //       }
+  //     },
+  //   })
+  // ).current;
+
+  const fetchComments = async () => {
+    setCommentsLoading(true);
+    setCommentsError(null);
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        commentsCollectionId,
+        [Query.equal('posts', postID), Query.orderDesc('$createdAt')]
+      );
+      setComments(response.documents);
+    } catch (error) {
+      setCommentsError('حدث خطأ أثناء جلب التعليقات' + error);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  // Add comment
+  const handleSendComment = async () => {
+    if (!newComment.trim()) return;
+    setSendingComment(true);
+    try {
+      const user = await account.get();
+      await databases.createDocument(
+        databaseId,
+        commentsCollectionId,
+        'unique()',
+        {
+          posts: postID,
+          userID: user.$id,
+          comment: newComment,
+        }
+      );
+      setNewComment("");
+      fetchComments();
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setSendingComment(false);
+    }
+  };
+
+  const panResponderModal = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Detect vertical swipe down
+        return gestureState.dy > 20;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 40) {
+          setCommentsVisible(false);
+        }
+      },
+    })
+  ).current;
+
   return (
-    <View style={{
-      width: "auto",
-      display: "flex",
-      flexDirection: "row-reverse",
-      padding: 2,
-      borderBottomColor: "#E0E0E050",
-      borderBottomWidth: 1,
-      marginTop: 4,
-      paddingLeft: 10,
-    }}
+    <View
+      // {...panResponder.panHandlers}
+      style={{
+        width: "auto",
+        display: "flex",
+        flexDirection: "row-reverse",
+        padding: 2,
+        borderBottomColor: "#E0E0E050",
+        borderBottomWidth: 1,
+        marginTop: 4,
+        paddingLeft: 10,
+      }}
     >
       <View id="avatarFrame"
         style={{
@@ -373,8 +486,12 @@ export default function Post({ postID, image, video, content, title, userID, lin
               </Text>
             </View>
             <View style={styles.iconFrame}>
-              <ChatTeardrop  size={20} color="gray" />
-              <Text style={styles.countText}>0</Text>
+              <Pressable onPress={() => setCommentsVisible(true)}>
+                <ChatTeardrop size={20} color="gray" />
+              </Pressable>
+              <Text style={styles.countText}>
+                {comments.length > 0 ? comments.length : "0"}
+              </Text>
             </View>
             <Pressable
               onPress={handleLike}
@@ -395,6 +512,105 @@ export default function Post({ postID, image, video, content, title, userID, lin
 
         </View>
       </View>
+      <Modal
+        visible={commentsVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setCommentsVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1, backgroundColor: '#00000080', justifyContent: 'flex-end' }}
+        >
+          <View
+            {...panResponderModal.panHandlers}
+            style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, minHeight: 300, maxHeight: '80%', padding: 20, flex: 1, justifyContent: 'flex-start', display: 'flex', flexDirection: 'column' }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10, width: "100%", textAlign: "center"}}>التعليقات</Text>
+            {commentsLoading ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="small" color="gray" style={{ marginVertical: 20 }} />
+              </View>
+            ) : commentsError ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: 'red' }}>{commentsError}</Text>
+              </View>
+            ) : comments.length === 0 ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>لا توجد تعليقات بعد.</Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: "100%" }}>
+                {comments.map((comment, idx) => (
+                  <View key={comment.$id || idx} style={{ flexDirection: 'row-reverse', alignItems: 'flex-start', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 8 }}>
+                    <Image
+                      source={{ uri: comment.userID && typeof comment.userID === 'object' && comment.userID.userProfile ? comment.userID.userProfile : undefined }}
+                      style={{ width: 36, height: 36, borderRadius: 18, marginLeft: 10, backgroundColor: '#eee' }}
+                    />
+                    <View style={{ }}>
+                      <Text style={{ fontWeight: 'bold', fontSize: 14, marginBottom: 2, textAlign:"right" }}>
+                        {typeof comment.userID === 'object'
+                          ? comment.userID.name || comment.userID.username
+                          : comment.userID}
+                      </Text>
+                      
+                      <Text style={{ fontSize: 10, color: 'gray', textAlign:"right" }}>{comment.$createdAt ? (() => {
+                        const now = new Date();
+                        const created = new Date(comment.$createdAt);
+                        const diffMs = now.getTime() - created.getTime();
+                        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                        if (diffDays < 7) {
+                          if (diffMinutes < 1) return "الآن";
+                          if (diffMinutes < 60) return `قبل ${diffMinutes} دقيقة`;
+                          if (diffHours < 24) {
+                            if (diffHours === 1) return "قبل ساعة";
+                            if (diffHours === 2) return "قبل ساعتين";
+                            if (diffHours < 11) return `قبل ${diffHours} ساعات`;
+                            return `قبل ${diffHours} ساعة`;
+                          }
+                          if (diffDays === 0) return "اليوم";
+                          if (diffDays === 1) return "قبل يوم";
+                          if (diffDays === 2) return "قبل يومين";
+                          if (diffDays < 10) return `قبل ${diffDays} أيام`;
+                        }
+                        return created.toLocaleDateString("ar-EG", {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        });
+                      })() : "تاريخ غير معروف"}</Text>
+                      <Text style={{ fontSize: 14, marginBottom: 2, textAlign:"right" }}>{comment.comment}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+            {/* Input for new comment */}
+            <View style={{ flexDirection: 'row-reverse', alignItems: 'center', marginTop: 10, borderTopWidth: 1, borderTopColor: '#eee', paddingTop: 10 }}>
+              <Image
+                source={{ uri: currentUser?.userProfile || undefined }}
+                style={{ width: 32, height: 32, borderRadius: 16, marginLeft: 8, backgroundColor: '#eee' }}
+              />
+              <TextInput
+                value={newComment}
+                onChangeText={setNewComment}
+                placeholder="أضف تعليقًا..."
+                style={{ flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, fontSize: 14, backgroundColor: '#fafafa', textAlign: 'right', alignSelf: "flex-end" }}
+                editable={!sendingComment}
+              />
+              <Pressable
+                onPress={handleSendComment}
+                disabled={sendingComment || !newComment.trim()}
+                style={{ marginLeft: 8, marginRight:8, opacity: sendingComment || !newComment.trim() ? 0.5 : 1 }}
+              >
+                <Text style={{ color: '#ff3c00', fontWeight: 'bold', fontSize: 16 }}>إرسال</Text>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }

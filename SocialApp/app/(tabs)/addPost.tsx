@@ -1,11 +1,10 @@
-import { Text, View, StyleSheet, TextInput, KeyboardAvoidingView, Platform, Pressable, Button, Image} from "react-native";
-import {  Images ,Video, Link, SpinnerGap } from "phosphor-react-native";
-import { useState } from "react";
-import { account, databases, databaseId, postsCollectionId, imagesStorageId, storage } from "../../lib/appwrite";
-import {ID} from 'react-native-appwrite';
-import { useRouter } from "expo-router";
 import * as DocumentPicker from 'expo-document-picker';
-import { Plus } from "phosphor-react-native";
+import { useRouter } from "expo-router";
+import { Images, Link, Play, Plus, SpinnerGap, Video } from "phosphor-react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { ID } from 'react-native-appwrite';
+import { account, databaseId, databases, imagesStorageId, postsCollectionId, storage } from "../../lib/appwrite";
 
 
 export default function AppPost() {
@@ -17,8 +16,22 @@ export default function AppPost() {
     const [mediaType, setMediaType] = useState<"image" | "video" | "link" | "none">("none");
     const [error, setError] = useState<string | null>(null);
     const [isImageLoading, setIsImageLoading] = useState<boolean>(false);
+    const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
     const router = useRouter();
 
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    useEffect(() => {
+        if (isVideoLoading) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, { toValue: 1.08, duration: 600, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+                ])
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
+        }
+    }, [isVideoLoading]);
 
     // Image
     const pickImage = async () => {
@@ -71,7 +84,7 @@ export default function AppPost() {
     
 
     // Video
-    const [isVideoLoading, setIsVideoLoading] = useState<boolean>(false);
+    
     const pickVideo = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -274,51 +287,119 @@ export default function AppPost() {
             )}
             {mediaType === "video" && (
                 <View style={{marginTop: 10, padding: 10, display: "flex", flexDirection: "row-reverse", gap: 10}}>
-                    {video && (
-                        <View style={{ position: "relative" }}>
-                          <Image
-                            source={{ uri: video }}
-                            style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 10,
-                              overflow: "hidden",
-                            }}
-                          />
-                          <Pressable
-                            onPress={() => {
-                              setVideo("");
-                            }}
-                            style={{
-                              position: "absolute",
-                              top: 2,
-                              left: 2,
-                              backgroundColor: "rgba(255,255,255,0.8)",
-                              borderRadius: 10,
-                              width: 20,
-                              height: 20,
-                              alignItems: "center",
-                              justifyContent: "center",
-                              zIndex: 1,
-                            }}
-                          >
-                            <Text style={{ color: "red", fontWeight: "bold", fontSize: 14 }}>×</Text>
-                          </Pressable>
-                        </View>
-                    )}
-                    {isVideoLoading && (
+                    {video && !isVideoLoading && (
                         <View style={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 10,
+                            width: 90,
+                            height: 110,
+                            borderRadius: 20,
                             overflow: "hidden",
-                            backgroundColor: "#eaeaea",
-                            display: "flex",
+                            backgroundColor: "#000",
+                            margin: 6,
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 8,
+                            elevation: 6,
+                            borderWidth: 1,
+                            borderColor: "#f3f3f3",
+                            position: "relative",
                             alignItems: "center",
                             justifyContent: "center",
                         }}>
-                            <SpinnerGap size={24} color="#a3a3a3" weight="bold" />
+                            <Image
+                                source={{ uri: video }}
+                                style={{ width: "100%", height: "100%", borderRadius: 20, opacity: 0.85 }}
+                                resizeMode="cover"
+                            />
+                            <View style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                backgroundColor: "rgba(0,0,0,0.15)",
+                                borderRadius: 20,
+                            }}>
+                                <Play size={36} color="#fff" weight="fill" style={{ opacity: 0.85 }} />
+                            </View>
+                            <Pressable
+                                onPress={() => setVideo("")}
+                                style={{
+                                    position: "absolute",
+                                    top: 6,
+                                    left: 6,
+                                    backgroundColor: "rgba(255,255,255,0.85)",
+                                    borderRadius: 10,
+                                    width: 24,
+                                    height: 24,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    zIndex: 1,
+                                    shadowColor: "#000",
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 2,
+                                    elevation: 2,
+                                }}
+                            >
+                                <Text style={{ color: "#ff3c00", fontWeight: "bold", fontSize: 18 }}>×</Text>
+                            </Pressable>
                         </View>
+                    )}
+                    {isVideoLoading && (
+                        <Animated.View style={{
+                            width: 90,
+                            height: 110,
+                            borderRadius: 20,
+                            overflow: "hidden",
+                            backgroundColor: "#fff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 8,
+                            elevation: 6,
+                            margin: 6,
+                            padding: 10,
+                            borderWidth: 1,
+                            borderColor: "#f3f3f3",
+                            transform: [{ scale: pulseAnim }],
+                        }}>
+                            <View style={{
+                                width: 90,
+                                height: 110,
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                borderRadius: 20,
+                                backgroundColor: "#fff",
+                                opacity: 0.7,
+                            }} />
+                            <Video size={28} color="#ff3c00" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} />
+                            <View style={{
+                                width: 54,
+                                height: 54,
+                                borderRadius: 27,
+                                backgroundColor: "#fff6f2",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginBottom: 8,
+                                shadowColor: "#ff3c00",
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowOpacity: 0.12,
+                                shadowRadius: 6,
+                                elevation: 2,
+                            }}>
+                                <ActivityIndicator size="large" color="#ff3c00" />
+                            </View>
+                            <Text style={{ color: "#ff3c00", fontSize: 15, fontFamily: "Rubik-Medium", marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
+                        </Animated.View>
                     )}
                     {!video && !isVideoLoading && (
                         <Pressable style={{
