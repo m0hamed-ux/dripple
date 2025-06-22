@@ -6,14 +6,30 @@ import { useState, useEffect } from "react";
 import { UserType } from "../types/database.type";
 import { databases, databaseId, usersCollectionId } from "../lib/appwrite";
 import { Query } from "react-native-appwrite";
+import { useVideoPlayer, VideoView } from 'expo-video';
 
 type PostProps = {
   image?: string | Array<string>;
   video?: string;
-  content: string;
+  content?: string;
   userID: string;
+  title: string;
+  link?: string;
+  createdAt?: string;
+  isActive?: boolean;
 };
-export default function Post({ image, video, content, userID }: PostProps) {
+export default function Post({ image, video, content, title, userID, link, createdAt, isActive }: PostProps) {
+  const videoLink = video && video.length > 0 ? video : "https://www.w3schools.com/html/mov_bbb.mp4";
+  const player = useVideoPlayer(videoLink, (player) => {
+    player.loop = true;
+  })
+  useEffect(() => {
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, player]);
   const [author, setAuthor] = useState<UserType[]>();
   useEffect(() => {
     getAuthor();
@@ -43,6 +59,7 @@ export default function Post({ image, video, content, userID }: PostProps) {
       borderBottomColor: "#E0E0E050",
       borderBottomWidth: 1,
       marginTop: 4,
+      paddingLeft: 10,
     }}
     >
       <View id="avatarFrame"
@@ -73,12 +90,60 @@ export default function Post({ image, video, content, userID }: PostProps) {
         }}>
           {author && author.length > 0 ? author[0].name : "مستخدم"}
         </Text>
-        <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>منذ ساعتين</Text>
+        <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>
+          {createdAt ? (() => {
+            const now = new Date();
+            const created = new Date(createdAt);
+            const diffMs = now.getTime() - created.getTime();
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            if (diffDays < 7) {
+              if (diffMinutes < 1) return "الآن";
+              if (diffMinutes < 60) return `قبل ${diffMinutes} دقيقة${diffMinutes === 1 ? '' : diffMinutes < 11 ? '' : ''}`;
+              if (diffHours < 24) {
+          if (diffHours === 1) return "قبل ساعة";
+          if (diffHours === 2) return "قبل ساعتين";
+          if (diffHours < 11) return `قبل ${diffHours} ساعات`;
+          return `قبل ${diffHours} ساعة`;
+              }
+              if (diffDays === 0) return "اليوم";
+              if (diffDays === 1) return "قبل يوم";
+              if (diffDays === 2) return "قبل يومين";
+              if (diffDays < 10) return `قبل ${diffDays} أيام`;
+            }
+            return created.toLocaleDateString("ar-EG", {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+          })() : "تاريخ غير معروف"}
+        </Text>
         <Text style={{
-          fontSize: 14,
-          fontFamily: "Rubik-Regular",
+          fontSize: 16,
+          fontFamily: "Rubik-Medium",
           marginBottom: 4,
-        }}>{content}</Text>
+        }}>{title}</Text>
+        {content && content.length > 0 && (
+            <Text style={{
+              fontSize: 14,
+              fontFamily: "Rubik-regular",
+              marginBottom: 4,
+              textAlign: "right",
+            }}>{content}</Text>
+        )}
+        {link && link.length > 0 && (
+            <Text style={{
+              fontSize: 14,
+              fontFamily: "Rubik-Medium",
+              marginBottom: 4,
+              color: "#007AFF",
+              textDecorationLine: "underline",
+              textDecorationColor: "#007AFF",
+              textAlign: "right",
+            }}>{link}</Text>
+        )}
+        
         {typeof image === "string" && (
           <Image
             source={{ uri: image }}
@@ -99,7 +164,7 @@ export default function Post({ image, video, content, userID }: PostProps) {
               display: "flex",
               flexDirection: "row",
               flexWrap: "wrap",
-              gap: 4,
+              gap: 0,
               marginBottom: 4,
             }}
           >
@@ -108,10 +173,12 @@ export default function Post({ image, video, content, userID }: PostProps) {
                 key={index}
                 source={{ uri: img }}
                 style={{
-                  flexBasis: "48%",
+                  borderWidth: 1,
+                  borderColor: "#fff",
+                  flexBasis: "50%",
                   flexGrow: 1,
                   flexShrink: 1,
-                  aspectRatio: 1,
+                  // aspectRatio: 1,
                   height: 150,
                   borderRadius: 10,
                   overflow: "hidden",
@@ -119,6 +186,27 @@ export default function Post({ image, video, content, userID }: PostProps) {
                 resizeMode="cover"
               />
             ))}
+          </View>
+        )}
+        {video && (
+          <View style={{
+            width: "100%",
+            height: 180,
+            backgroundColor: "#E0E0E050",
+            borderRadius: 10,
+            overflow: "hidden",
+            marginBottom: 4,
+          }}>
+            <VideoView
+              player={player}
+              style={{
+                // width: "100%",
+                height: "100%",
+              }}
+              allowsFullscreen
+              contentFit= "cover"
+              
+            />
           </View>
         )}
         <View style={{

@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { House, Compass, PlayCircle, User } from "phosphor-react-native";
+import { House, Compass, PlayCircle, User, PlusCircle} from "phosphor-react-native";
 import { useFonts } from 'expo-font';
 
 
@@ -32,6 +32,16 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarIcon: ({ color }) => (
             <Compass size={24} color={color} weight="fill" />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="addPost"
+        options={{
+          title: "نشر",
+          headerShown: false,
+          tabBarIcon: ({ color }) => (
+            <PlusCircle  size={30} color={color} weight="fill" />
           ),
         }}
       />
