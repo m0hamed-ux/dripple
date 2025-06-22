@@ -27,13 +27,6 @@ export default function Post({ postID, image, video, content, title, userID, lin
     player.loop = true;
   })
   const videoRef = useRef(null);
-  useEffect(() => {
-    if (isActive) {
-      player.play();
-    } else {
-      player.pause();
-    }
-  }, [isActive, player]);
   const [author, setAuthor] = useState<UserType[]>();
   const [likesCount, setLikesCount] = useState<number>(0);
   const [userLiked, setUserLiked] = useState<boolean>(false);
@@ -44,6 +37,19 @@ export default function Post({ postID, image, video, content, title, userID, lin
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+
+  const [fontsLoaded] = useFonts({
+    'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
+    'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    if (isActive) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isActive, player]);
 
   useEffect(() => {
     getAuthor();
@@ -77,6 +83,9 @@ export default function Post({ postID, image, video, content, title, userID, lin
     fetchUser();
   }, []);
 
+  // Early return for font loading
+  if (!fontsLoaded) return null;
+
   const getAuthor = async () => {
     try {
       const respond = await databases.listDocuments(
@@ -89,10 +98,6 @@ export default function Post({ postID, image, video, content, title, userID, lin
       console.error('Error fetching posts:', error);
     }
   }
-  const [fontsLoaded] = useFonts({
-      'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
-      'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-    });
 
   const getLikesCount = async () => {
     try {

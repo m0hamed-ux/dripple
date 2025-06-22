@@ -1,16 +1,30 @@
-import { databaseId, databases, postsCollectionId } from "@/lib/appwrite";
-import { PostType } from "@/types/database.type";
+import { databaseId, databases, postsCollectionId, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { useAuth } from "@/lib/auth";
+import { PostType, StoryType, UserType } from "@/types/database.type";
+import { useRouter } from "expo-router";
 import { Bell, ChatTeardrop } from "phosphor-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Models } from "react-native-appwrite";
+import MyStory from "../../components/myStory";
 import Post from "../../components/post";
 import Story from "../../components/story";
 
+interface UserStories {
+  user: Models.Document; 
+  stories: StoryType[];
+}
+
 export default function Home() {
+  const { user: authUser } = useAuth();
   const [posts, setposts] = useState<PostType[]>();
+  const [groupedStories, setGroupedStories] = useState<UserStories[]>([]);
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserType | null>(null);
+  const [currentUserStories, setCurrentUserStories] = useState<StoryType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const scrollRef = useRef(null);
+  const router = useRouter();
 
   // Function to shuffle an array
   const shuffleArray = (array: any) => {
@@ -20,6 +34,22 @@ export default function Home() {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  };
+
+  const fetchCurrentUserProfile = async () => {
+    if (!authUser) return;
+    
+    try {
+      const response = await databases.listDocuments(
+        databaseId,
+        usersCollectionId,
+        // [Query.equal('userID', authUser.$id)]
+      );
+      const userProfile = response.documents.find(doc => doc.userID === authUser.$id) as UserType;
+      setCurrentUserProfile(userProfile);
+    } catch (error) {
+      console.error('Error fetching current user profile:', error);
+    }
   };
 
   const fetchPosts = async () => {
@@ -35,17 +65,63 @@ export default function Home() {
       console.error('Error fetching posts:', error);
     }
   };
+
+  const fetchStories = async () => {
+    try {
+      const respond = await databases.listDocuments(
+        databaseId,
+        storiesCollectionId,
+        // [Query.limit(50)]
+      );
+      const stories = respond.documents as StoryType[];
+      
+      // Filter current user's stories
+      if (authUser) {
+        const userStories = stories.filter(story => story.userID.userID === authUser.$id);
+        setCurrentUserStories(userStories);
+      }
+      
+      // Filter out current user's stories from the main list
+      const otherUsersStories = authUser 
+        ? stories.filter(story => story.userID.userID !== authUser.$id)
+        : stories;
+      
+      const storiesByUser = otherUsersStories.reduce((acc, story) => {
+        const userId = story.userID.$id;
+        if (!acc[userId]) {
+          acc[userId] = {
+            user: story.userID,
+            stories: []
+          };
+        }
+        acc[userId].stories.push(story);
+        return acc;
+      }, {} as Record<string, UserStories>);
+
+      setGroupedStories(Object.values(storiesByUser));
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+    }
+  };
   
 
   useEffect(() => {
+    fetchCurrentUserProfile();
     fetchPosts();
-  }, []);
+    fetchStories();
+  }, [authUser]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    await fetchCurrentUserProfile();
     await fetchPosts();
+    await fetchStories();
     setRefreshing(false);
-  }, []);
+  }, [authUser]);
+
+  const handleAddStory = () => {
+    router.push('/addStory');
+  };
 
   return (
     <ScrollView
@@ -108,12 +184,20 @@ export default function Home() {
               paddingBottom: 0,
             }}
           >
-            <Story image="https://randomuser.me/api/portraits/men/1.jpg" username="محمد" />
-            <Story image="https://randomuser.me/api/portraits/women/2.jpg" username="سارة" />
-            <Story image="https://randomuser.me/api/portraits/men/3.jpg" username="أحمد" />
-            <Story image="https://randomuser.me/api/portraits/women/4.jpg" username="ليلى" />
-            <Story image="https://randomuser.me/api/portraits/men/5.jpg" username="يوسف" />
-            <Story image="https://randomuser.me/api/portraits/women/6.jpg" username="هند" />
+            {currentUserProfile && (
+              <MyStory
+                user={currentUserProfile}
+                userStories={currentUserStories}
+                onAddStory={handleAddStory}
+              />
+            )}
+            {groupedStories.map(({ user, stories }) => (
+              <Story
+                key={user.$id}
+                user={user}
+                stories={stories}
+              />
+            ))}
           </ScrollView>
         </View>
         <Text style={{
