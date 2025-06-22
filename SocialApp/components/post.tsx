@@ -1,13 +1,11 @@
-import { Text, View, StyleSheet, Image,Pressable } from "react-native";
 import { useFonts } from 'expo-font';
-import { Heart, ChatTeardrop, ShareFat  } from "phosphor-react-native";
-import { account } from "../lib/appwrite";
-import { useState, useEffect } from "react";
-import { UserType } from "../types/database.type";
-import { databases, databaseId, usersCollectionId } from "../lib/appwrite";
+import { useVideoPlayer, VideoView,  } from 'expo-video';
+import { ArrowsOutSimple, ChatTeardrop, Heart, Play, ShareFat } from "phosphor-react-native";
+import { useEffect, useRef, useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { useVideoPlayer, VideoView } from 'expo-video';
-import { Play } from "phosphor-react-native";
+import { databaseId, databases, usersCollectionId } from "../lib/appwrite";
+import { UserType } from "../types/database.type";
 
 
 type PostProps = {
@@ -19,12 +17,14 @@ type PostProps = {
   link?: string;
   createdAt?: string;
   isActive?: boolean;
+  onPlay?: () => void;
 };
-export default function Post({ image, video, content, title, userID, link, createdAt, isActive }: PostProps) {
+export default function Post({ image, video, content, title, userID, link, createdAt, isActive, onPlay }: PostProps) {
   const videoLink = video && video.length > 0 ? video : "https://www.w3schools.com/html/mov_bbb.mp4";
   const player = useVideoPlayer(videoLink, (player) => {
     player.loop = true;
   })
+  const videoRef = useRef(null);
   useEffect(() => {
     if (isActive) {
       player.play();
@@ -193,21 +193,22 @@ export default function Post({ image, video, content, title, userID, link, creat
         {video && (
             <View style={{
             width: "100%",
-            aspectRatio: 1,
-            backgroundColor: "#E0E0E050",
+            aspectRatio: 16 / 9,
+            backgroundColor: "black",
             borderRadius: 10,
             overflow: "hidden",
             marginBottom: 4,
             }}>
             <VideoView
               player={player}
+              ref={videoRef}
               style={{
               width: "100%",
               height: "100%",
               }}
               allowsFullscreen
-              contentFit="cover"
-              nativeControls={false}
+              contentFit="contain"
+              nativeControls={true}
             />
             <View style={{
               position: "absolute",
@@ -219,31 +220,53 @@ export default function Post({ image, video, content, title, userID, link, creat
               justifyContent: "center",
               alignItems: "center",
             }}>
-              <Pressable
-                onPress={() => {
-                  if (player.playing) {
-                    player.pause();
-                  } else {
-                    player.play();
-                  }
-                }}
-              >
-                {!player.playing && (
-                  <View 
-                  style={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: 25,
-                    backgroundColor: "#00000080",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  >
-                  <Play size={24} color="#fff" weight="fill" />
-                  </View>
-                )}
-              </Pressable>
+          <Pressable
+          onPress={() => {
+            if (!isActive && onPlay) {
+            onPlay();
+            } else if (isActive) {
+            player.pause();
+            }
+          }}
+          style={{ marginBottom: 10 }}
+          >
+          {!isActive && (
+            <View 
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: 25,
+              backgroundColor: "#00000000",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+            >
+            <Play size={24} color="#00000000" weight="fill" />
+            </View>
+          )}
+          </Pressable>
+          {/* Video duration display */}
+          <View style={{
+            position: "absolute",
+            bottom: 8,
+            left: 8,
+            backgroundColor: "#00000080",
+            borderRadius: 6,
+            paddingHorizontal: 6,
+            paddingVertical: 2,
+          }}>
+            <Text style={{ color: "#fff", fontSize: 12 }}>
+              {player?.duration
+                ? (() => {
+              const totalSeconds = Math.floor(player.duration);
+              const minutes = Math.floor(totalSeconds / 60);
+              const seconds = totalSeconds % 60;
+              return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+            })()
+                : "0:00"}
+            </Text>
+          </View>
               </View>
             </View>
         )}

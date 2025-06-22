@@ -1,15 +1,16 @@
-import { Text, View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { databaseId, databases, postsCollectionId } from "@/lib/appwrite";
+import { PostType } from "@/types/database.type";
+import { Bell, ChatTeardrop } from "phosphor-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import Post from "../../components/post";
 import Story from "../../components/story";
-import { databases, databaseId, postsCollectionId } from "@/lib/appwrite";
-import { useState, useEffect, useCallback } from "react";
-import { PostType } from "@/types/database.type";
-import { Query } from "react-native-appwrite";
-import { Bell, ChatTeardrop } from "phosphor-react-native";
 
 export default function Home() {
   const [posts, setposts] = useState<PostType[]>();
   const [refreshing, setRefreshing] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const scrollRef = useRef(null);
 
   // Function to shuffle an array
   const shuffleArray = (array: any) => {
@@ -48,10 +49,12 @@ export default function Home() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
+      onScrollBeginDrag={() => setActivePostId(null)}
     >
       <View style={styles.view}>
         <View id="header" style={{width: "100%", paddingHorizontal: 10, paddingTop: 10, paddingBottom: 0, display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between"}}>
@@ -134,9 +137,11 @@ export default function Home() {
               content={post.content}
               userID={post.userID}
               image={post.images}
-              link= {post.link}
+              link={post.link}
               video={post.video}
               createdAt={post.$createdAt}
+              isActive={activePostId === post.$id}
+              onPlay={() => setActivePostId(post.$id)}
             />
           ))}
         </View>
