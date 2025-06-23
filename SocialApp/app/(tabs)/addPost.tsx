@@ -401,7 +401,7 @@ export default function AppPost() {
                     backgroundColor: "#fff",
                     opacity: 0.7,
                   }} />
-                  <Video size={32} color="#0095f6" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} />
+                  {/* <Video size={32} color="#0095f6" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} /> */}
                   <View style={{
                     width: 54,
                     height: 54,

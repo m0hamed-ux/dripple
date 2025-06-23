@@ -33,6 +33,7 @@ export default function Watch() {
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showHeart, setShowHeart] = useState<{ [index: number]: boolean }>({});
   const heartAnim = useRef<{ [index: number]: Animated.Value }>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -41,66 +42,69 @@ export default function Watch() {
     }, [])
   );
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      setLoading(true);
-      try {
-        const postsRes = await databases.listDocuments(databaseId, postsCollectionId);
-        const videoPosts = (postsRes.documents as PostType[]).filter(post => post.video && post.video.length > 0);
-        setVideos(videoPosts);
-        // Fetch users for all videos
-        const userIds = Array.from(new Set(videoPosts.map(v => v.userID)));
-        const usersMap: { [userId: string]: UserType } = {};
-        for (const userId of userIds) {
-          try {
-            const res = await databases.listDocuments(databaseId, usersCollectionId, [
-              Query.equal('userID', userId)
-            ]);
-            if (res.documents && res.documents.length > 0) {
-              usersMap[userId] = res.documents[0] as UserType;
-            }
-          } catch {}
-        }
-        setUsers(usersMap);
-        // Fetch likes, userLiked, and comments count for all videos
-        const likesMap: { [postId: string]: number } = {};
-        const userLikedMap: { [postId: string]: boolean } = {};
-        const commentsMap: { [postId: string]: number } = {};
-        let currentUserId = null;
+  const fetchVideos = async () => {
+    setLoading(true);
+    try {
+      const postsRes = await databases.listDocuments(databaseId, postsCollectionId, [
+        Query.orderDesc('$createdAt')
+      ]);
+      const videoPosts = (postsRes.documents as PostType[]).filter(post => post.video && post.video.length > 0);
+      setVideos(videoPosts);
+      // Fetch users for all videos
+      const userIds = Array.from(new Set(videoPosts.map(v => v.userID)));
+      const usersMap: { [userId: string]: UserType } = {};
+      for (const userId of userIds) {
         try {
-          const user = await account.get();
-          currentUserId = user.$id;
+          const res = await databases.listDocuments(databaseId, usersCollectionId, [
+            Query.equal('userID', userId)
+          ]);
+          if (res.documents && res.documents.length > 0) {
+            usersMap[userId] = res.documents[0] as UserType;
+          }
         } catch {}
-        for (const v of videoPosts) {
-          try {
-            // Likes count
-            const likesRes = await databases.listDocuments(databaseId, likesCollectionId, [
-              Query.equal('posts', v.$id)
-            ]);
-            likesMap[v.$id] = likesRes.documents.length;
-            // User liked
-            if (currentUserId) {
-              const userLikedRes = await databases.listDocuments(databaseId, likesCollectionId, [
-                Query.equal('userID', currentUserId),
-                Query.equal('posts', v.$id)
-              ]);
-              userLikedMap[v.$id] = userLikedRes.documents.length > 0;
-            }
-            // Comments count
-            const commentsRes = await databases.listDocuments(databaseId, commentsCollectionId, [
-              Query.equal('posts', v.$id)
-            ]);
-            commentsMap[v.$id] = commentsRes.documents.length;
-          } catch {}
-        }
-        setLikes(likesMap);
-        setComments(commentsMap);
-        setUserLiked(userLikedMap);
-      } catch (e) {
-        // handle error
       }
-      setLoading(false);
-    };
+      setUsers(usersMap);
+      // Fetch likes, userLiked, and comments count for all videos
+      const likesMap: { [postId: string]: number } = {};
+      const userLikedMap: { [postId: string]: boolean } = {};
+      const commentsMap: { [postId: string]: number } = {};
+      let currentUserId = null;
+      try {
+        const user = await account.get();
+        currentUserId = user.$id;
+      } catch {}
+      for (const v of videoPosts) {
+        try {
+          // Likes count
+          const likesRes = await databases.listDocuments(databaseId, likesCollectionId, [
+            Query.equal('posts', v.$id)
+          ]);
+          likesMap[v.$id] = likesRes.documents.length;
+          // User liked
+          if (currentUserId) {
+            const userLikedRes = await databases.listDocuments(databaseId, likesCollectionId, [
+              Query.equal('userID', currentUserId),
+              Query.equal('posts', v.$id)
+            ]);
+            userLikedMap[v.$id] = userLikedRes.documents.length > 0;
+          }
+          // Comments count
+          const commentsRes = await databases.listDocuments(databaseId, commentsCollectionId, [
+            Query.equal('posts', v.$id)
+          ]);
+          commentsMap[v.$id] = commentsRes.documents.length;
+        } catch {}
+      }
+      setLikes(likesMap);
+      setComments(commentsMap);
+      setUserLiked(userLikedMap);
+    } catch (e) {
+      // handle error
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchVideos();
   }, []);
 
@@ -196,9 +200,6 @@ export default function Watch() {
   // Fix swipe skipping: update activeIndex only, do not call scrollToIndex
   const onMomentumScrollEnd = (ev: any) => {
     const index = Math.round(ev.nativeEvent.contentOffset.y / VIDEO_HEIGHT);
-    if (index !== activeIndex) {
-      flatListRef.current?.scrollToIndex({ index, animated: true });
-    }
     setActiveIndex(index);
   };
 
@@ -261,7 +262,7 @@ export default function Watch() {
             <Video
               source={{ uri: item.video || '' }}
               style={styles.video}
-              resizeMode={ResizeMode.COVER}
+              resizeMode={ResizeMode.CONTAIN}
               shouldPlay={isFocused && activeIndex === index && !isPaused}
               isMuted={false}
               isLooping={true}
@@ -455,6 +456,13 @@ export default function Watch() {
     );
   };
 
+  // Add onRefresh handler
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchVideos();
+    setRefreshing(false);
+  };
+
   if (loading) {
     return <View style={styles.loading}><ActivityIndicator size="large" color="#007AFF" /></View>;
   }
@@ -465,16 +473,18 @@ export default function Watch() {
       data={videos}
       keyExtractor={item => item.$id}
       renderItem={renderItem}
-      pagingEnabled
       showsVerticalScrollIndicator={false}
       snapToInterval={VIDEO_HEIGHT}
-      decelerationRate="fast"
+      snapToAlignment="start"
+      decelerationRate="normal"
       onMomentumScrollEnd={onMomentumScrollEnd}
       getItemLayout={(_, index) => ({ length: VIDEO_HEIGHT, offset: VIDEO_HEIGHT * index, index })}
       style={{ backgroundColor: 'black' }}
       scrollEventThrottle={16}
       initialNumToRender={3}
       windowSize={3}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
     />
   );
 }

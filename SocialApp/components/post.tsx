@@ -56,7 +56,7 @@ export default function Post({ postID, image, video, content, title, userID, lin
   }, [isActive, player]);
 
   useEffect(() => {
-    getUserData();
+    getUser();
     getLikesCount();
     isLiked();
     fetchComments();
@@ -90,7 +90,7 @@ export default function Post({ postID, image, video, content, title, userID, lin
   // Early return for font loading
   if (!fontsLoaded) return null;
 
-  const getUserData = async () => {
+  const getUser = async () => {
     try {
       const respond = await databases.listDocuments(
         databaseId,
