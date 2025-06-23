@@ -35,6 +35,10 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
       onAddStory?.();
     }
   };
+  const handleAddStory = () => {
+    onAddStory?.();
+  }
+
 
   const handleNextStory = () => {
     if (currentStoryIndex < userStories!.length - 1) {
@@ -97,9 +101,9 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
           <Text style={styles.username} numberOfLines={1}>
             {hasStories ? 'قصتك' : 'أضف قصة'}
           </Text>
-          <View style={styles.plusButton}>
+          <Pressable onPress={handleAddStory} style={styles.plusButton}>
             <Plus size={16} color="white" weight="bold" />
-          </View>
+          </Pressable>
         </View>
       </Pressable>
       
