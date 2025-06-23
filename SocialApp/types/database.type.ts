@@ -7,13 +7,20 @@ export interface PostType extends Models.Document {
     images?: string | Array<string>;
     video?: string;
     createdAt?: string;
+    community?: communityType;
 }
 export interface UserType extends Models.Document {
     userID: string;
     username: string;
     name: string;
     userProfile?: string;
+    bio?: string;
     verified?: boolean;
+}
+export interface communityType extends Models.Document {
+    name: string;
+    image?: string;
+    banner?: string;
 }
 export interface LikeType extends Models.Document {
     postID: string;

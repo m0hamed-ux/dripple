@@ -338,7 +338,7 @@ export default function AddStory() {
                   width: 80,
                   height: 80,
                   borderRadius: 40,
-                  backgroundColor: "#ff3c00",
+                  backgroundColor: "#0095f6",
                   alignItems: "center",
                   justifyContent: "center",
                   marginBottom: 10,
@@ -393,7 +393,7 @@ export default function AddStory() {
           <Text style={{
             fontFamily: "Rubik-Regular",
             textAlign: "center",
-            color: '#ff3c00',
+            color: '#0095f6',
             marginTop: 15,
             padding: 10,
             backgroundColor: "rgba(255, 60, 0, 0.1)",

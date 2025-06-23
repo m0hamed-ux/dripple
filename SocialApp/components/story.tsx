@@ -363,15 +363,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+
   },
   storyText: {
+    backgroundColor: "#00000080",
+    width: "150%",
+    paddingHorizontal: "25%",
     color: 'white',
-    fontSize: 24,
+    fontSize: 14,
     fontFamily: 'Rubik-Medium',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
     lineHeight: 32,
   },
 });

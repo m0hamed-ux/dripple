@@ -1,11 +1,11 @@
 import { useFonts } from 'expo-font';
 import { useVideoPlayer, VideoView, } from 'expo-video';
-import { ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
+import { CaretLeft, ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
 import { account, commentsCollectionId, databaseId, databases, likesCollectionId, usersCollectionId } from "../lib/appwrite";
-import { UserType } from "../types/database.type";
+import { communityType, UserType } from "../types/database.type";
 
 
 
@@ -19,9 +19,10 @@ type PostProps = {
   link?: string;
   createdAt?: string;
   isActive?: boolean;
+  community?: communityType;
   onPlay?: () => void;
 };
-export default function Post({ postID, image, video, content, title, userID, link, createdAt, isActive, onPlay }: PostProps) {
+export default function Post({ postID, image, video, content, title, userID, link, createdAt, isActive, community, onPlay }: PostProps) {
   const videoLink = video && video.length > 0 ? video : "https://www.w3schools.com/html/mov_bbb.mp4";
   const player = useVideoPlayer(videoLink, (player) => {
     player.loop = true;
@@ -37,6 +38,9 @@ export default function Post({ postID, image, video, content, title, userID, lin
   const [newComment, setNewComment] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const screenWidth = Dimensions.get('window').width;
+  const contentWidth = screenWidth * 0.8 - 16;
 
   const [fontsLoaded] = useFonts({
     'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
@@ -52,7 +56,7 @@ export default function Post({ postID, image, video, content, title, userID, lin
   }, [isActive, player]);
 
   useEffect(() => {
-    getAuthor();
+    getUserData();
     getLikesCount();
     isLiked();
     fetchComments();
@@ -86,7 +90,7 @@ export default function Post({ postID, image, video, content, title, userID, lin
   // Early return for font loading
   if (!fontsLoaded) return null;
 
-  const getAuthor = async () => {
+  const getUserData = async () => {
     try {
       const respond = await databases.listDocuments(
         databaseId,
@@ -295,10 +299,22 @@ export default function Post({ postID, image, video, content, title, userID, lin
           alignItems: "center",
           gap: 4,
         }}>
+          {community && (
+            <>
+            <Text style={{
+              fontSize: 14,
+              fontFamily: "Rubik-Regular",
+              color: "gray",
+            }}>{community.name}</Text>
+            <CaretLeft size={14} color="gray" weight="fill" />
+            </>
+          )}
+
           { author && author.length > 0 && author[0].verified && (
             <SealCheck size={14} color="#0095f6" weight="fill" />
           )}
           <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",}}>{author && author.length > 0 ? author[0].name : "مستخدم"} </Text>
+          
         </View>
         <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>
           {createdAt ? (() => {
@@ -358,8 +374,8 @@ export default function Post({ postID, image, video, content, title, userID, lin
           <Image
             source={{ uri: image }}
             style={{
-              width: "100%",
-              aspectRatio: 1,
+              width: contentWidth,
+              height: contentWidth,
               borderRadius: 10,
               overflow: "hidden",
               marginBottom: 4,
@@ -367,35 +383,52 @@ export default function Post({ postID, image, video, content, title, userID, lin
             resizeMode="cover"
           />
         )}
-        {Array.isArray(image) && (
-          <View
-            style={{
-              width: "100%",
-              display: "flex",
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 0,
-              marginBottom: 4,
-            }}
-          >
-            {image.map((img, index) => (
-              <Image
-                key={index}
-                source={{ uri: img }}
-                style={{
-                  borderWidth: 1,
-                  borderColor: "#fff",
-                  flexBasis: "50%",
-                  flexGrow: 1,
-                  flexShrink: 1,
-                  // aspectRatio: 1,
-                  height: 150,
-                  borderRadius: 10,
-                  overflow: "hidden",
-                }}
-                resizeMode="cover"
-              />
-            ))}
+        {Array.isArray(image) && image.length > 0 && (
+          <View style={{ width: contentWidth, alignItems: "center", marginBottom: 8 }}>
+            <FlatList
+              data={image}
+              keyExtractor={(item, idx) => idx.toString()}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              decelerationRate={"fast"}
+              contentContainerStyle={{ alignItems: 'center' }}
+              onMomentumScrollEnd={e => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / contentWidth);
+                setCurrentImageIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <View style={{ width: contentWidth, alignItems: 'center', justifyContent: 'center', height: contentWidth }}>
+                  <Image
+                    source={{ uri: item }}
+                    style={{
+                      width: contentWidth,
+                      height: contentWidth,
+                      borderRadius: 12,
+                    }}
+                    resizeMode='cover'
+                  />
+                </View>
+              )}
+              style={{ width: contentWidth }}
+            />
+            {/* Indicator Dots: only show if more than one image */}
+            {image.length > 1 && (
+              <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8 }}>
+                {image.map((_, idx) => (
+                  <View
+                    key={idx}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      marginHorizontal: 3,
+                      backgroundColor: currentImageIndex === idx ? '#0095f6' : '#ccc',
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         )}
         {video && (
@@ -571,15 +604,15 @@ export default function Post({ postID, image, video, content, title, userID, lin
                           source={{ uri: comment.userID && typeof comment.userID === 'object' && comment.userID.userProfile ? comment.userID.userProfile : undefined }}
                           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#eee', marginLeft: 10 }}
                         />
-                        <View style={{ flex: 1 }}>
-                          <View style={{ display:"flex", flexDirection:"row-reverse", gap: 5, alignContent:"center" }}>
+                        <View style={{ flex: 1, justifyContent: "center" }}>
+                          <View style={{ display:"flex", flexDirection:"row-reverse", gap: 5, alignContent:"center", alignItems:"center" }}>
                             <View style={{ display: "flex", flexDirection: "row", alignItems: "center", gap : 2}}>
                               { comment.userID && comment.userID.verified && (
                                 <SealCheck size={14} color="#0095f6" weight="fill" />
                               )}
                               <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{typeof comment.userID === 'object' ? comment.userID.name || comment.userID.username : comment.userID} </Text>
                             </View>
-                            <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10 }}>{comment.$createdAt ? (() => {
+                            <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10, verticalAlign: "middle" }}>{comment.$createdAt ? (() => {
                               const now = new Date();
                               const created = new Date(comment.$createdAt);
                               const diffMs = now.getTime() - created.getTime();

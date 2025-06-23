@@ -36,7 +36,7 @@ export default function Home() {
             justifyContent: "center",
             alignItems: "center",
             padding: 20,
-            backgroundColor: "#ff3c00",
+            backgroundColor: "#0095f6",
         }}>
             <Text style={{
                 fontSize: 24,

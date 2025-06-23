@@ -14,6 +14,7 @@ export default function RootLayout() {
             <Stack.Screen name="register" options={{ headerShown: false }}/>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
             <Stack.Screen name="addStory" options={{ headerShown: false }}/>
+            <Stack.Screen name="configureAccount" options={{ headerShown: false }}/>
           </Stack>
         </SafeAreaView>
       </Auth>

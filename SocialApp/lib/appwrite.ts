@@ -1,4 +1,4 @@
-import {Account, Client, Databases, Messaging, Storage} from 'react-native-appwrite';
+import { Account, Client, Databases, Messaging, Storage } from 'react-native-appwrite';
 
 export const client = new Client()
   .setEndpoint('https://nyc.cloud.appwrite.io/v1')
@@ -18,6 +18,7 @@ export const imagesStorageId = '6856cdeb003b063e06d2';
 export const likesCollectionId = '685811b2000adce1ae1f';
 export const commentsCollectionId = '68581e190019c6286fbc';
 export const storiesCollectionId = '68587954003c15fa31ea';
+export const communitiesCollectionId = '68592878003110928a09';
 
 
 // // get posts collection

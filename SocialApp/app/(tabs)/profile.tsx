@@ -1,10 +1,11 @@
-import { Text, View, StyleSheet } from "react-native";
-import { Link } from "expo-router";
-import { useAuth } from "../../lib/auth";
+import { useRouter } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
 import { Button } from "react-native-paper";
+import { useAuth } from "../../lib/auth";
 
 export default function Profile() {
   const { user, isLoadingUser, signOut } = useAuth();
+  const router = useRouter();
 
   return (
     <View style={styles.view}>
@@ -12,6 +13,7 @@ export default function Profile() {
         {user ? "true" : "false"}
       </Text>
       <Button onPress={signOut}>Sign out</Button>
+      <Button onPress={() => router.push('/configureAccount')}>تعديل الحساب</Button>
     </View>
   );
 }

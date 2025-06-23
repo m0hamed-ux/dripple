@@ -46,7 +46,7 @@ export default function Login() {
                 setError(error);
                 return;
             }
-            router.replace("/(tabs)/home");
+            router.replace("/configureAccount");
         } else {
             const error = await signIn(email, password);
             if (error) {
@@ -64,7 +64,7 @@ export default function Login() {
                 justifyContent: "center",
                 backgroundColor: "white",
             }}>
-                <Text style={{fontFamily: "Rubik-Black",color: "#ff3c00", fontSize: 26, width: "100%", textAlign: "right"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
+                <Text style={{fontFamily: "Rubik-Black",color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 <Text style={{
                     fontFamily: "Rubik-Regular",
                     textAlign: "right",
@@ -82,7 +82,7 @@ export default function Login() {
                     autoCapitalize="none"
                     keyboardType="email-address"
                     mode="outlined"
-                    activeOutlineColor="#ff3c00"
+                    activeOutlineColor="#0095f6"
                     textAlign="center"
                     style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 10}}
                     onChangeText={(text) => (setEmail(text), setError(null))}
@@ -93,7 +93,7 @@ export default function Login() {
                     keyboardType="default"
                     secureTextEntry={true}
                     mode="outlined"
-                    activeOutlineColor="#ff3c00"
+                    activeOutlineColor="#0095f6"
                     style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 15}}
                     onChangeText={(text) => (setPassword(text), setError(null))}
                 />
@@ -104,7 +104,7 @@ export default function Login() {
                         keyboardType="default"
                         secureTextEntry={true}
                         mode="outlined"
-                        activeOutlineColor="#ff3c00"
+                        activeOutlineColor="#0095f6"
                         style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 15}}
                         onChangeText={(text) => (setConfirmPassword(text), setError(null))}
                     />
@@ -114,7 +114,7 @@ export default function Login() {
                         fontFamily: "Rubik-Regular",
                         textAlign: "right",
                         marginBottom: 10,
-                        color: "#ff3c00",
+                        color: "#0095f6",
                         fontSize: 14,
                         marginTop: -10,
                     }} onPress={() => {
@@ -125,9 +125,9 @@ export default function Login() {
                 
                 <Button style={{
                     width: "100%",
-                    backgroundColor: "#ff3c00",
+                    backgroundColor: "#0095f6",
                     borderRadius: 5,
-                    borderBlockColor: "#ff3c00",
+                    borderBlockColor: "#0095f6",
                     borderWidth: 2,
                     marginTop: 0,
                 }} mode="contained" 
@@ -155,7 +155,7 @@ export default function Login() {
                 }}>
                     {isSignUp ? "ليس لديك حساب؟ " : "لديك حساب بالفعل؟ "}
                     <Text
-                        style={{ color: "#ff3c00" }}
+                        style={{ color: "#0095f6" }}
                         onPress={() => setIsSignUp(!isSignUp)}
                     >
                         {isSignUp ? "إنشاء حساب" : "تسجيل الدخول"}

@@ -10,11 +10,15 @@ export default function TabsLayout() {
   });
 
   return (
-    <Tabs screenOptions={{
+    <Tabs screenOptions={({ route }) => ({
       tabBarActiveTintColor: '#0095f6',
       tabBarInactiveTintColor: "#8E8E93",
       tabBarLabelStyle: { fontSize: 12, fontFamily: "Rubik-Regular" },
-    }}>
+      tabBarStyle: {
+        backgroundColor: route.name === 'watch' ? 'black' : 'white',
+        borderTopColor: route.name === 'watch' ? 'black' : '#eee',
+      },
+    })}>
       <Tabs.Screen
         name="home"
         options={{

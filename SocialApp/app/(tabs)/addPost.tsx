@@ -288,7 +288,7 @@ export default function AppPost() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <XCircle size={22} color="#ff3c00" weight="fill" />
+                    <XCircle size={22} color="#0095f6" weight="fill" />
                   </TouchableOpacity>
                 </Animated.View>
               ))}
@@ -371,7 +371,7 @@ export default function AppPost() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <XCircle size={26} color="#ff3c00" weight="fill" />
+                    <XCircle size={26} color="#0095f6" weight="fill" />
                   </TouchableOpacity>
                 </View>
               )}
@@ -401,7 +401,7 @@ export default function AppPost() {
                     backgroundColor: "#fff",
                     opacity: 0.7,
                   }} />
-                  <Video size={32} color="#ff3c00" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} />
+                  <Video size={32} color="#0095f6" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} />
                   <View style={{
                     width: 54,
                     height: 54,
@@ -411,9 +411,9 @@ export default function AppPost() {
                     justifyContent: "center",
                     marginBottom: 8,
                   }}>
-                    <ActivityIndicator size="large" color="#ff3c00" />
+                    <ActivityIndicator size="large" color="#0095f6" />
                   </View>
-                  <Text style={{ color: "#ff3c00", fontSize: 15, fontFamily: "Rubik-Medium", marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
+                  <Text style={{ color: "#0095f6", fontSize: 15, fontFamily: "Rubik-Medium", marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
                 </Animated.View>
               )}
               {!video && !isVideoLoading && (
@@ -436,7 +436,7 @@ export default function AppPost() {
             <Text style={{
               fontFamily: "Rubik-Regular",
               textAlign: "center",
-              color: '#ff3c00',
+              color: '#0095f6',
               marginBottom: 10,
               padding: 10,
               backgroundColor: "#ffe6e6",

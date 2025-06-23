@@ -200,7 +200,7 @@ export default function Home() {
             ))}
           </ScrollView>
         </View>
-        <Text style={{
+        {/* <Text style={{
             fontSize: 20,
             fontFamily: "Rubik-Medium",
             marginBottom: 10,
@@ -209,7 +209,7 @@ export default function Home() {
             paddingHorizontal: 10,
           }}>
           أحدث المنشورات
-        </Text>
+        </Text> */}
         <View id="postView" style={{
           width: "100%",
           padding: 0,
@@ -226,6 +226,7 @@ export default function Home() {
               video={post.video}
               createdAt={post.$createdAt}
               isActive={activePostId === post.$id}
+              community={post.community}
               onPlay={() => setActivePostId(post.$id)}
             />
           ))}
