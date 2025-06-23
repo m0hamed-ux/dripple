@@ -13,6 +13,7 @@ export interface UserType extends Models.Document {
     username: string;
     name: string;
     userProfile?: string;
+    verified?: boolean;
 }
 export interface LikeType extends Models.Document {
     postID: string;

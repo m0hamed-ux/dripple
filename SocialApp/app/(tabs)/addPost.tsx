@@ -1,8 +1,8 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from "expo-router";
-import { Images, Link, Play, Plus, SpinnerGap, Video } from "phosphor-react-native";
+import { Images, Link, Play, Plus, SpinnerGap, Video, XCircle } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Animated, Image, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Animated, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { ID } from 'react-native-appwrite';
 import { account, databaseId, databases, imagesStorageId, postsCollectionId, storage } from "../../lib/appwrite";
 
@@ -162,275 +162,291 @@ export default function AppPost() {
     }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{backgroundColor: "#fff", height: "100%"}}>
-        <View style={{display: "flex", padding: 10, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center"}}>
-            <Text style={{
-              fontSize: 24,
-              fontFamily: "Rubik-Medium",
-              marginBottom: 0,
-              textAlign: "right",
-            }}>منشور جديد</Text>
-            <Pressable onPress={async ()=>{await addPost(content, title)}} disabled={title.length < 3 || (mediaType == "link" && link == "")} >
-                <Text style={{
-                    fontSize: 16,
-                    fontFamily: "Rubik-Medium",
-                    color: "white",
-                    backgroundColor: title.length < 3 || (mediaType == "link" && link == "") ? "#a3a3a3" : '#0095f6',
-                    paddingHorizontal: 15,
-                    paddingVertical: 2,
-                    borderRadius: 15,
-                    textAlign: "right",
-                }}>نشر</Text>
-            </Pressable>
-        </View>
-        <View style={{padding: 10}}>
-            <TextInput value={title} onChangeText={setTitle} multiline placeholder="العنوان"maxLength={40} style={{fontFamily: "Rubik-Medium", fontSize: 16, textAlign: "right"}}>
-            </TextInput>
-            <TextInput
-              multiline
-              placeholder="محتوى المنشور (اختياري)"
-              maxLength={200}
-              value={content}
-              onChangeText={setContent}
-              style={{fontFamily: "Rubik-Regular", fontSize: 14, textAlign: "right"}}
-            />
-            {mediaType === "link" && (
-                <TextInput
-                    placeholder="رابط"
-                    value={link}
-                    onChangeText={setLink}
-                    autoCapitalize="none"
-                    keyboardType="url"
-                    style={{fontFamily: "Rubik-Regular", fontSize: 14, textAlign: "right", marginTop: 0}}
-                />
-            )}
-            <View style={{display: "flex", flexDirection: "row", justifyContent: "flex-end", gap: 10, marginTop: 10, paddingHorizontal: 10}}>
-                <Pressable onPress={
-                    () => {pickImage()}} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
-                    <Images size={24} color={mediaType == "image"?'#0095f6':mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
-                </Pressable>
-
-                <Pressable onPress={() => {pickVideo()}} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
-                    <Video size={24} color={mediaType == "video"?'#0095f6':mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
-                </Pressable>
-                
-                <Pressable onPress={() => setMediaType(mediaType === "link" ? "none" : "link")} style={{backgroundColor: "transparent", padding: 0, margin: 0}}>
-                    <Link size={24} color={mediaType == "link"?'#0095f6':mediaType == "none"?"#a3a3a3":"#eaeaea"} weight="bold" />
-                </Pressable>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{backgroundColor: "#fff", flex: 1}}>
+      <ScrollView contentContainerStyle={{flexGrow: 1}} keyboardShouldPersistTaps="handled">
+        <View style={{padding: 8, paddingTop: 14, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fff"}}>
+          <Text style={{
+            fontSize: 26,
+            fontFamily: "Rubik-Medium",
+            textAlign: "right",
+            color: "#222"
+          }}>منشور جديد</Text>
+          <TouchableOpacity onPress={async ()=>{await addPost(content, title)}} disabled={title.length < 3 || (mediaType == "link" && link == "")} activeOpacity={0.7}>
+            <View style={{
+              backgroundColor: title.length < 3 || (mediaType == "link" && link == "") ? "#a3a3a3" : '#0095f6',
+              paddingHorizontal: 22,
+              paddingVertical: 5,
+              borderRadius: 20,
+              opacity: title.length < 3 || (mediaType == "link" && link == "") ? 0.7 : 1
+            }}>
+              <Text style={{
+                fontSize: 18,
+                fontFamily: "Rubik-Medium",
+                color: "white",
+                textAlign: "center"
+              }}>نشر</Text>
             </View>
-            {mediaType === "image" && (
-                <View style={{marginTop: 10, padding: 10, display: "flex", flexDirection: "row-reverse", gap: 10}}>
-                    {image.map((img, index) => (
-                        <View key={index} style={{ position: "relative" }}>
-                          <Image
-                            source={{ uri: img }}
-                            style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 10,
-                              overflow: "hidden",
-                            }}
-                          />
-                          <Pressable
-                            onPress={() => {
-                              setImage((prev) => prev.filter((_, i) => i !== index));
-                            }}
-                            style={{
-                              position: "absolute",
-                              top: 2,
-                              left: 2,
-                              backgroundColor: "rgba(255,255,255,0.8)",
-                              borderRadius: 10,
-                              width: 20,
-                              height: 20,
-                              alignItems: "center",
-                              justifyContent: "center",
-                              zIndex: 1,
-                            }}
-                          >
-                            <Text style={{ color: '#0095f6', fontWeight: "bold", fontSize: 14 }}>×</Text>
-                          </Pressable>
-                        </View>
-                    ))}
-                    {isImageLoading && (
-                        <View style={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 10,
-                            overflow: "hidden",
-                            backgroundColor: "#eaeaea",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}>
-                            <SpinnerGap size={24} color="#a3a3a3" weight="bold" />
-                        </View>
-                    )}
-                    {image.length < 4 && (
-                        <Pressable style={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 10,
-                            overflow: "hidden",
-                            backgroundColor: "#eaeaea",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                         }} onPress={() => {pickImage()}} >
-                            <Plus size={24} color="#a3a3a3" weight="bold"></Plus>
-                        </Pressable>
-                    )}
-                    
-
-
-                </View>
-            )}
-            {mediaType === "video" && (
-                <View style={{marginTop: 10, padding: 10, display: "flex", flexDirection: "row-reverse", gap: 10}}>
-                    {video && !isVideoLoading && (
-                        <View style={{
-                            width: 90,
-                            height: 110,
-                            borderRadius: 20,
-                            overflow: "hidden",
-                            backgroundColor: "#000",
-                            margin: 6,
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.15,
-                            shadowRadius: 8,
-                            elevation: 6,
-                            borderWidth: 1,
-                            borderColor: "#f3f3f3",
-                            position: "relative",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}>
-                            <Image
-                                source={{ uri: video }}
-                                style={{ width: "100%", height: "100%", borderRadius: 20, opacity: 0.85 }}
-                                resizeMode="cover"
-                            />
-                            <View style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                alignItems: "center",
-                                justifyContent: "center",
-                                backgroundColor: "rgba(0,0,0,0.15)",
-                                borderRadius: 20,
-                            }}>
-                                <Play size={36} color="#fff" weight="fill" style={{ opacity: 0.85 }} />
-                            </View>
-                            <Pressable
-                                onPress={() => setVideo("")}
-                                style={{
-                                    position: "absolute",
-                                    top: 6,
-                                    left: 6,
-                                    backgroundColor: "rgba(255,255,255,0.85)",
-                                    borderRadius: 10,
-                                    width: 24,
-                                    height: 24,
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    zIndex: 1,
-                                    shadowColor: "#000",
-                                    shadowOffset: { width: 0, height: 1 },
-                                    shadowOpacity: 0.1,
-                                    shadowRadius: 2,
-                                    elevation: 2,
-                                }}
-                            >
-                                <Text style={{ color: "#ff3c00", fontWeight: "bold", fontSize: 18 }}>×</Text>
-                            </Pressable>
-                        </View>
-                    )}
-                    {isVideoLoading && (
-                        <Animated.View style={{
-                            width: 90,
-                            height: 110,
-                            borderRadius: 20,
-                            overflow: "hidden",
-                            backgroundColor: "#fff",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.15,
-                            shadowRadius: 8,
-                            elevation: 6,
-                            margin: 6,
-                            padding: 10,
-                            borderWidth: 1,
-                            borderColor: "#f3f3f3",
-                            transform: [{ scale: pulseAnim }],
-                        }}>
-                            <View style={{
-                                width: 90,
-                                height: 110,
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                borderRadius: 20,
-                                backgroundColor: "#fff",
-                                opacity: 0.7,
-                            }} />
-                            <Video size={28} color="#ff3c00" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} />
-                            <View style={{
-                                width: 54,
-                                height: 54,
-                                borderRadius: 27,
-                                backgroundColor: "#fff6f2",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginBottom: 8,
-                                shadowColor: "#ff3c00",
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.12,
-                                shadowRadius: 6,
-                                elevation: 2,
-                            }}>
-                                <ActivityIndicator size="large" color="#ff3c00" />
-                            </View>
-                            <Text style={{ color: "#ff3c00", fontSize: 15, fontFamily: "Rubik-Medium", marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
-                        </Animated.View>
-                    )}
-                    {!video && !isVideoLoading && (
-                        <Pressable style={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 10,
-                            overflow: "hidden",
-                            backgroundColor: "#eaeaea",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                         }} onPress={() => {pickVideo()}} >
-                            <Plus size={24} color="#a3a3a3" weight="bold"></Plus>
-                        </Pressable>
-                    )}
-                </View>
-            )}
-            {error && (
-                <Text style={{
-                    fontFamily: "Rubik-Regular",
-                    textAlign: "center",
-                    color: '#0095f6',
-                    marginBottom: 10,
-                    padding: 10,
-                    backgroundColor: "#ffe6e6",
-                    borderRadius: 5,
-                    marginTop: 10,
-                }}>{error}</Text>
-            )}
-            
+          </TouchableOpacity>
         </View>
+        <View style={{padding: 0, backgroundColor: "#fff", borderRadius: 18, margin: 16, marginTop: 18, marginBottom: 0}}>
+          <TextInput value={title} onChangeText={setTitle} multiline placeholder="العنوان" maxLength={40}
+            placeholderTextColor="#b0b0b0"
+            style={{
+              fontFamily: "Rubik-Medium",
+              fontSize: 17,
+              textAlign: "right",
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 10,
+              backgroundColor: "#fafbfc"
+            }}
+          />
+          <TextInput
+            multiline
+            placeholder="محتوى المنشور (اختياري)"
+            maxLength={200}
+            value={content}
+            onChangeText={setContent}
+            placeholderTextColor="#b0b0b0"
+            style={{
+              fontFamily: "Rubik-Regular",
+              fontSize: 15,
+              textAlign: "right",
+              borderWidth: 1,
+              borderColor: "#e0e0e0",
+              borderRadius: 12,
+              padding: 12,
+              backgroundColor: "#fafbfc"
+            }}
+          />
+          {mediaType === "link" && (
+            <TextInput
+              placeholder="رابط"
+              value={link}
+              onChangeText={setLink}
+              autoCapitalize="none"
+              keyboardType="url"
+              placeholderTextColor="#b0b0b0"
+              style={{
+                fontFamily: "Rubik-Regular",
+                fontSize: 15,
+                textAlign: "right",
+                borderWidth: 1,
+                borderColor: "#e0e0e0",
+                borderRadius: 12,
+                padding: 12,
+                marginTop: 10,
+                backgroundColor: "#fafbfc"
+              }}
+            />
+          )}
+          <View style={{flexDirection: "row-reverse", justifyContent: "flex-end", gap: 18, marginTop: 18}}>
+            <TouchableOpacity onPress={pickImage} style={{padding: 8, borderRadius: 50, backgroundColor: mediaType === "image" ? "#e6f2fb" : "#f2f2f2"}} activeOpacity={0.7}>
+              <Images size={28} color={mediaType === "image" ? '#0095f6' : '#a3a3a3'} weight="bold" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={pickVideo} style={{padding: 8, borderRadius: 50, backgroundColor: mediaType === "video" ? "#e6f2fb" : "#f2f2f2"}} activeOpacity={0.7}>
+              <Video size={28} color={mediaType === "video" ? '#0095f6' : '#a3a3a3'} weight="bold" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setMediaType(mediaType === "link" ? "none" : "link")} style={{padding: 8, borderRadius: 50, backgroundColor: mediaType === "link" ? "#e6f2fb" : "#f2f2f2"}} activeOpacity={0.7}>
+              <Link size={28} color={mediaType === "link" ? '#0095f6' : '#a3a3a3'} weight="bold" />
+            </TouchableOpacity>
+          </View>
+          {/* Media Preview Section */}
+          {mediaType === "image" && (
+            <Animated.View style={{marginTop: 18, flexDirection: "row-reverse", gap: 12, alignItems: "center"}}>
+              {image.map((img, index) => (
+                <Animated.View key={index} style={{position: "relative", opacity: 1, transform: [{scale: 1}]}}>
+                  <Image
+                    source={{ uri: img }}
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0",
+                      backgroundColor: "#f2f2f2"
+                    }}
+                  />
+                  <TouchableOpacity
+                    onPress={() => {
+                      setImage((prev) => prev.filter((_, i) => i !== index));
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: -8,
+                      left: -8,
+                      backgroundColor: "#fff",
+                      borderRadius: 12,
+                      width: 28,
+                      height: 28,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0"
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <XCircle size={22} color="#ff3c00" weight="fill" />
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}
+              {isImageLoading && (
+                <View style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 12,
+                  backgroundColor: "#eaeaea",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: "#e0e0e0"
+                }}>
+                  <SpinnerGap size={28} color="#a3a3a3" weight="bold" />
+                </View>
+              )}
+              {image.length < 4 && !isImageLoading && (
+                <TouchableOpacity style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 12,
+                  backgroundColor: "#eaeaea",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: "#e0e0e0"
+                }} onPress={pickImage} activeOpacity={0.7}>
+                  <Plus size={28} color="#a3a3a3" weight="bold" />
+                </TouchableOpacity>
+              )}
+            </Animated.View>
+          )}
+          {mediaType === "video" && (
+            <Animated.View style={{marginTop: 18, flexDirection: "row-reverse", alignItems: "center", gap: 12}}>
+              {video && !isVideoLoading && (
+                <View style={{
+                  width: 110,
+                  height: 140,
+                  borderRadius: 18,
+                  backgroundColor: "#000",
+                  borderWidth: 1,
+                  borderColor: "#e0e0e0",
+                  position: "relative",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                  <Image
+                    source={{ uri: video }}
+                    style={{ width: "100%", height: "100%", borderRadius: 18, opacity: 0.85 }}
+                    resizeMode="cover"
+                  />
+                  <View style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "rgba(0,0,0,0.15)",
+                    borderRadius: 18,
+                  }}>
+                    <Play size={40} color="#fff" weight="fill" style={{ opacity: 0.85 }} />
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => setVideo("")}
+                    style={{
+                      position: "absolute",
+                      top: -10,
+                      left: -10,
+                      backgroundColor: "#fff",
+                      borderRadius: 14,
+                      width: 32,
+                      height: 32,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0"
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <XCircle size={26} color="#ff3c00" weight="fill" />
+                  </TouchableOpacity>
+                </View>
+              )}
+              {isVideoLoading && (
+                <Animated.View style={{
+                  width: 110,
+                  height: 140,
+                  borderRadius: 18,
+                  backgroundColor: "#fff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: "#e0e0e0",
+                  margin: 0,
+                  padding: 0,
+                  transform: [{ scale: pulseAnim }],
+                }}>
+                  <View style={{
+                    width: 110,
+                    height: 140,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: 18,
+                    backgroundColor: "#fff",
+                    opacity: 0.7,
+                  }} />
+                  <Video size={32} color="#ff3c00" weight="fill" style={{ marginBottom: 6, opacity: 0.85 }} />
+                  <View style={{
+                    width: 54,
+                    height: 54,
+                    borderRadius: 27,
+                    backgroundColor: "#fff6f2",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 8,
+                  }}>
+                    <ActivityIndicator size="large" color="#ff3c00" />
+                  </View>
+                  <Text style={{ color: "#ff3c00", fontSize: 15, fontFamily: "Rubik-Medium", marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
+                </Animated.View>
+              )}
+              {!video && !isVideoLoading && (
+                <TouchableOpacity style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 12,
+                  backgroundColor: "#eaeaea",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 1,
+                  borderColor: "#e0e0e0"
+                }} onPress={pickVideo} activeOpacity={0.7}>
+                  <Plus size={28} color="#a3a3a3" weight="bold" />
+                </TouchableOpacity>
+              )}
+            </Animated.View>
+          )}
+          {error && (
+            <Text style={{
+              fontFamily: "Rubik-Regular",
+              textAlign: "center",
+              color: '#ff3c00',
+              marginBottom: 10,
+              padding: 10,
+              backgroundColor: "#ffe6e6",
+              borderRadius: 8,
+              marginTop: 18,
+              fontSize: 15
+            }}>{error}</Text>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

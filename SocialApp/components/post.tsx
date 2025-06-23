@@ -1,6 +1,6 @@
 import { useFonts } from 'expo-font';
 import { useVideoPlayer, VideoView, } from 'expo-video';
-import { ChatTeardrop, Heart, Play } from "phosphor-react-native";
+import { ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
@@ -287,13 +287,19 @@ export default function Post({ postID, image, video, content, title, userID, lin
         alignItems: "flex-end",
         padding: 0,
       }}>
-        <Text style={{
-          fontSize: 16,
-          fontFamily: "Rubik-Medium",
+        <View style={{
           marginBottom: 0,
+          alignContent: "center",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
         }}>
-          {author && author.length > 0 ? author[0].name : "مستخدم"}
-        </Text>
+          { author && author.length > 0 && author[0].verified && (
+            <SealCheck size={14} color="#0095f6" weight="fill" />
+          )}
+          <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",}}>{author && author.length > 0 ? author[0].name : "مستخدم"} </Text>
+        </View>
         <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>
           {createdAt ? (() => {
             const now = new Date();
@@ -567,7 +573,12 @@ export default function Post({ postID, image, video, content, title, userID, lin
                         />
                         <View style={{ flex: 1 }}>
                           <View style={{ display:"flex", flexDirection:"row-reverse", gap: 5, alignContent:"center" }}>
-                            <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{typeof comment.userID === 'object' ? comment.userID.name || comment.userID.username : comment.userID} </Text>
+                            <View style={{ display: "flex", flexDirection: "row", alignItems: "center", gap : 2}}>
+                              { comment.userID && comment.userID.verified && (
+                                <SealCheck size={14} color="#0095f6" weight="fill" />
+                              )}
+                              <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{typeof comment.userID === 'object' ? comment.userID.name || comment.userID.username : comment.userID} </Text>
+                            </View>
                             <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10 }}>{comment.$createdAt ? (() => {
                               const now = new Date();
                               const created = new Date(comment.$createdAt);
@@ -609,13 +620,13 @@ export default function Post({ postID, image, video, content, title, userID, lin
                             alignContent: "center"
                           }}>
                             <Text style={{ fontSize: 14 }}>{comment.comment}</Text>
-                            <Pressable style={{ marginLeft: 10 }}>
+                            {/* <Pressable style={{ marginLeft: 10 }}>
                               <Heart size={14} color="gray" />
-                            </Pressable>
+                            </Pressable> */}
                           </View>
                         </View>
                       </View>
-                      <View style={{ height: 1, backgroundColor: '#f2f2f2', marginVertical: 2 }} />
+                      <View style={{ height: 0, backgroundColor: '#f2f2f2', marginVertical: 2 }} />
                     </View>
                   ))}
                 </ScrollView>
