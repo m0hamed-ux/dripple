@@ -32,7 +32,7 @@ export default function Profile() {
     if (!authUser) return;
     try {
       const res = await databases.listDocuments(databaseId, postsCollectionId);
-      const userPosts = res.documents.filter((doc: any) => doc.userID === authUser.$id) as PostType[];
+      const userPosts = res.documents.filter((doc: any) => doc.user && doc.user.userID === authUser.$id) as PostType[];
       setPosts(userPosts);
     } catch (e) {
       setPosts([]);
@@ -124,7 +124,7 @@ export default function Profile() {
                 postID={post.$id}
                 title={post.title}
                 content={post.content}
-                userID={post.userID}
+                user={post.user}
                 image={post.images}
                 link={post.link}
                 video={post.video}

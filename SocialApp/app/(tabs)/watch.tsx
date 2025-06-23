@@ -15,7 +15,6 @@ export default function Watch() {
   const [videos, setVideos] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [users, setUsers] = useState<{ [userId: string]: UserType }>({});
   const [likes, setLikes] = useState<{ [postId: string]: number }>({});
   const [comments, setComments] = useState<{ [postId: string]: number }>({});
   const [userLiked, setUserLiked] = useState<{ [postId: string]: boolean }>({});
@@ -50,21 +49,6 @@ export default function Watch() {
       ]);
       const videoPosts = (postsRes.documents as PostType[]).filter(post => post.video && post.video.length > 0);
       setVideos(videoPosts);
-      // Fetch users for all videos
-      const userIds = Array.from(new Set(videoPosts.map(v => v.userID)));
-      const usersMap: { [userId: string]: UserType } = {};
-      for (const userId of userIds) {
-        try {
-          const res = await databases.listDocuments(databaseId, usersCollectionId, [
-            Query.equal('userID', userId)
-          ]);
-          if (res.documents && res.documents.length > 0) {
-            usersMap[userId] = res.documents[0] as UserType;
-          }
-        } catch {}
-      }
-      setUsers(usersMap);
-      // Fetch likes, userLiked, and comments count for all videos
       const likesMap: { [postId: string]: number } = {};
       const userLikedMap: { [postId: string]: boolean } = {};
       const commentsMap: { [postId: string]: number } = {};
@@ -251,7 +235,7 @@ export default function Watch() {
   };
 
   const renderItem = ({ item, index }: { item: PostType, index: number }) => {
-    const user = users[item.userID];
+    const user = item.user;
     const isPaused = pausedVideos[index];
     const showHeartNow = showHeart[index];
     const heartScale = heartAnim.current[index] || new Animated.Value(0);
