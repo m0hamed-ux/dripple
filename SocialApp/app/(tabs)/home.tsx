@@ -220,7 +220,7 @@ export default function Home() {
               postID={post.$id}
               title={post.title}
               content={post.content}
-              userID={post.userID}
+              user={post.user}
               image={post.images}
               link={post.link}
               video={post.video}

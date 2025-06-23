@@ -135,7 +135,7 @@ export default function AppPost() {
                 postsCollectionId,
                 ID.unique(),
                 {
-                    userID: await account.get().then((user) => user.$id),
+                    user: await account.get().then((user) => user.$id),
                     title: title,
                     content: content,
                     link: mediaType === "link" ? link : null,

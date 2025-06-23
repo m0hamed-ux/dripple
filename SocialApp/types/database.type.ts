@@ -1,6 +1,6 @@
 import { Models } from 'react-native-appwrite';
 export interface PostType extends Models.Document {
-    userID: string;
+    user: UserType;
     content: string;
     title: string;
     link?: string;

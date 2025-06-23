@@ -14,21 +14,21 @@ type PostProps = {
   image?: string | Array<string>;
   video?: string;
   content?: string;
-  userID: string;
   title: string;
   link?: string;
   createdAt?: string;
   isActive?: boolean;
   community?: communityType;
+  user?: UserType;
   onPlay?: () => void;
 };
-export default function Post({ postID, image, video, content, title, userID, link, createdAt, isActive, community, onPlay }: PostProps) {
+export default function Post({ postID, image, video, content, title, link, createdAt, isActive, community, user, onPlay }: PostProps) {
   const videoLink = video && video.length > 0 ? video : "https://www.w3schools.com/html/mov_bbb.mp4";
   const player = useVideoPlayer(videoLink, (player) => {
     player.loop = true;
   })
   const videoRef = useRef(null);
-  const [author, setAuthor] = useState<UserType[]>();
+  // const [author, setAuthor] = useState<UserType[]>();
   const [likesCount, setLikesCount] = useState<number>(0);
   const [userLiked, setUserLiked] = useState<boolean>(false);
   const [commentsVisible, setCommentsVisible] = useState(false);
@@ -56,11 +56,10 @@ export default function Post({ postID, image, video, content, title, userID, lin
   }, [isActive, player]);
 
   useEffect(() => {
-    getUser();
     getLikesCount();
     isLiked();
     fetchComments();
-  }, [userID]);
+  }, [userLiked, postID]);
 
   // Fetch comments when modal opens
   useEffect(() => {
@@ -90,18 +89,18 @@ export default function Post({ postID, image, video, content, title, userID, lin
   // Early return for font loading
   if (!fontsLoaded) return null;
 
-  const getUser = async () => {
-    try {
-      const respond = await databases.listDocuments(
-        databaseId,
-        usersCollectionId,
-        [Query.equal('userID', userID)]
-      );
-      setAuthor(respond.documents as UserType[]);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    }
-  }
+  // const getUser = async () => {
+  //   try {
+  //     const respond = await databases.listDocuments(
+  //       databaseId,
+  //       usersCollectionId,
+  //       [Query.equal('userID', userID)]
+  //     );
+  //     setAuthor(respond.documents as UserType[]);
+  //   } catch (error) {
+  //     console.error('Error fetching posts:', error);
+  //   }
+  // }
 
   const getLikesCount = async () => {
     try {
@@ -277,7 +276,7 @@ export default function Post({ postID, image, video, content, title, userID, lin
         }}
       >
         <Image
-          source={{ uri: author && author.length > 0 ? author[0].userProfile : ""}}
+          source={{ uri: user?.userProfile }}
           style={{
             width: 50,
             height: 50,
@@ -310,10 +309,10 @@ export default function Post({ postID, image, video, content, title, userID, lin
             </>
           )}
 
-          { author && author.length > 0 && author[0].verified && (
+          { user?.verified && (
             <SealCheck size={14} color="#0095f6" weight="fill" />
           )}
-          <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",}}>{author && author.length > 0 ? author[0].name : "مستخدم"} </Text>
+          <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",}}>{user?.name} </Text>
           
         </View>
         <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>

@@ -13,17 +13,11 @@ interface MyStoryProps {
 }
 
 export default function MyStory({ user, userStories, onAddStory }: MyStoryProps) {
+
   const [modalVisible, setModalVisible] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
   const videoRef = useRef<Video>(null);
-
-  const [fontsLoaded] = useFonts({
-    'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
-    'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-  });
-
-  if (!fontsLoaded) return null;
 
   const hasStories = userStories && userStories.length > 0;
   const { userProfile: userimage, name: username } = user;
