@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   userName: {
     color: '#fff',
     fontSize: 16,
-    fontFamily: 'Rubik-Medium',
+    
     marginLeft: 8,
   },
   title: {

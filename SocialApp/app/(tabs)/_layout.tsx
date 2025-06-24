@@ -4,11 +4,6 @@ import { Compass, House, PlayCircle, PlusCircle, User } from "phosphor-react-nat
 
 
 export default function TabsLayout() {
-  const [fontsLoaded] = useFonts({
-    'Rubik-Black': require('../../assets/fonts/Rubik-Black.ttf'),
-    'Rubik-Regular': require('../../assets/fonts/Rubik-Regular.ttf'),
-  });
-
   return (
     <Tabs screenOptions={({ route }) => ({
       tabBarActiveTintColor: '#0095f6',

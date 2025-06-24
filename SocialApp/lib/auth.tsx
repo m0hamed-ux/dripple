@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { ID, Models } from "react-native-appwrite";
-import { account, usersCollectionId, databaseId, databases } from "./appwrite";
+import { account, databaseId, databases, usersCollectionId } from "./appwrite";
 
 
 type AuthContextType = {
@@ -15,15 +15,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function Auth({children}: {children: React.ReactNode}){
     const [user, setUser] = React.useState<Models.User<Models.Preferences> | null>(null);
     const [isLoadingUser, setIsLoadingUser] = React.useState<boolean>(true);
+    
     useEffect(() => {
         getUser();
     }, []);
 
     const getUser = async () => {
         try {
-            const session = await account.get();
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 10000)
+            );
+            
+            const sessionPromise = account.get();
+            const session = await Promise.race([sessionPromise, timeoutPromise]) as Models.User<Models.Preferences>;
             setUser(session);
         } catch (error) {
+            console.log('No active session or timeout:', error);
             setUser(null);
         } finally {
             setIsLoadingUser(false);
@@ -55,15 +63,16 @@ export function Auth({children}: {children: React.ReactNode}){
                 }
             )
 
-
             return null;
         } catch (error) {
+            console.error('Sign up error:', error);
             if (error instanceof Error) {
                 return error.message;
             }
             return "An unknown error occurred during sign up.";
         }
     }
+    
     const signIn = async (email: string, password: string) => {
         try {
             await account.createEmailPasswordSession(email, password);
@@ -71,15 +80,23 @@ export function Auth({children}: {children: React.ReactNode}){
             setUser(session);
             return null;
         } catch (error) {
+            console.error('Sign in error:', error);
             if (error instanceof Error) {
                 return error.message;
             }
             return "An unknown error occurred during sign in.";
         }
     }
+    
     const signOut = async () => {
-        await account.deleteSession("current");
-        setUser(null);
+        try {
+            await account.deleteSession("current");
+            setUser(null);
+        } catch (error) {
+            console.error('Sign out error:', error);
+            // Even if sign out fails, clear the local user state
+            setUser(null);
+        }
     }
 
     return (<AuthContext.Provider value={{user, isLoadingUser, signUp, signIn, signOut}}>

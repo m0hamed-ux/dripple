@@ -42,10 +42,6 @@ export default function Post({ postID, image, video, content, title, link, creat
   const screenWidth = Dimensions.get('window').width;
   const contentWidth = screenWidth * 0.8 - 16;
 
-  const [fontsLoaded] = useFonts({
-    'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
-    'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-  });
 
   useEffect(() => {
     if (isActive) {
@@ -85,22 +81,6 @@ export default function Post({ postID, image, video, content, title, link, creat
     };
     fetchUser();
   }, []);
-
-  // Early return for font loading
-  if (!fontsLoaded) return null;
-
-  // const getUser = async () => {
-  //   try {
-  //     const respond = await databases.listDocuments(
-  //       databaseId,
-  //       usersCollectionId,
-  //       [Query.equal('userID', userID)]
-  //     );
-  //     setAuthor(respond.documents as UserType[]);
-  //   } catch (error) {
-  //     console.error('Error fetching posts:', error);
-  //   }
-  // }
 
   const getLikesCount = async () => {
     try {

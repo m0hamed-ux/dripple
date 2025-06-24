@@ -16,13 +16,7 @@ export default function Story({ user, stories }: StoryProps) {
   const progress = useRef(new Animated.Value(0)).current;
   const videoRef = useRef<Video>(null);
 
-  const [fontsLoaded] = useFonts({
-    'Rubik-Medium': require('../assets/fonts/Rubik-Medium.ttf'),
-    'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-  });
 
-  // Early return for font loading
-  if (!fontsLoaded) return null;
 
   // Early return for empty stories
   if (!stories || stories.length === 0) {
@@ -340,7 +334,7 @@ const styles = StyleSheet.create({
   },
   storyUsername: {
     color: 'white',
-    fontFamily: 'Rubik-Medium',
+    
     fontSize: 14,
   },
   storyNavigation: {
@@ -371,7 +365,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: "25%",
     color: 'white',
     fontSize: 14,
-    fontFamily: 'Rubik-Medium',
+    
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     lineHeight: 32,

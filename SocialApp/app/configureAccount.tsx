@@ -22,10 +22,7 @@ export default function ConfigureAccount() {
   const [error, setError] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const router = useRouter();
-  const [fontsLoaded] = useFonts({
-    'Rubik-Black': require('../assets/fonts/Rubik-Black.ttf'),
-    'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-  });
+
 
   // Fetch user document for initial values
   useEffect(() => {
@@ -163,7 +160,6 @@ export default function ConfigureAccount() {
     }
   };
 
-  if (!fontsLoaded) return null;
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <View style={{
@@ -172,7 +168,7 @@ export default function ConfigureAccount() {
         justifyContent: "center",
         backgroundColor: "white",
       }}>
-        <Text style={{fontFamily: "Rubik-Black", color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}>إعداد الحساب</Text>
+        <Text style={{ color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}>إعداد الحساب</Text>
         <Text style={{
           fontFamily: "Rubik-Regular",
           textAlign: "right",

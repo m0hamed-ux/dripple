@@ -6,10 +6,6 @@ import { Button, Text, TextInput } from "react-native-paper";
 import { useAuth } from "../lib/auth";
 
 export default function Login() {
-    const [fontsLoaded] = useFonts({
-        'Rubik-Black': require('../assets/fonts/Rubik-Black.ttf'),
-        'Rubik-Regular': require('../assets/fonts/Rubik-Regular.ttf'),
-    });
     const [isSignUp, setIsSignUp] = useState<boolean>(false);
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
@@ -64,7 +60,7 @@ export default function Login() {
                 justifyContent: "center",
                 backgroundColor: "white",
             }}>
-                <Text style={{fontFamily: "Rubik-Black",color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
+                <Text style={{color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 <Text style={{
                     fontFamily: "Rubik-Regular",
                     textAlign: "right",

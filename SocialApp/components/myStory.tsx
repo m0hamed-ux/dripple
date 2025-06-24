@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   storyUsername: {
     color: 'white',
-    fontFamily: 'Rubik-Medium',
+    
     fontSize: 14,
   },
   storyNavigation: {
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: "25%",
     color: 'white',
     fontSize: 14,
-    fontFamily: 'Rubik-Medium',
+    
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     lineHeight: 32,

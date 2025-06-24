@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 15,
-    fontFamily: 'Rubik-Medium',
+    
     color: '#222',
     marginBottom: 2,
     textAlign: 'right',
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
   editBtnText: {
     color: 'white',
     textAlign: "center",
-    fontFamily: 'Rubik-Medium',
+    
     fontSize: 14,
     flex: 1,
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   signOutBtnText: {
     color: '#222',
     textAlign: "center",
-    fontFamily: 'Rubik-Medium',
+    
     fontSize: 14,
   },
   postsSection: {

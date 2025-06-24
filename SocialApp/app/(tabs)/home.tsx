@@ -1,10 +1,10 @@
-import { databaseId, databases, postsCollectionId, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { databaseId, postsCollectionId, safeListDocuments, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth";
 import { PostType, StoryType, UserType } from "@/types/database.type";
 import { useRouter } from "expo-router";
 import { Bell, ChatTeardrop } from "phosphor-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Models } from "react-native-appwrite";
 import MyStory from "../../components/myStory";
 import Post from "../../components/post";
@@ -16,13 +16,15 @@ interface UserStories {
 }
 
 export default function Home() {
-  const { user: authUser } = useAuth();
-  const [posts, setposts] = useState<PostType[]>();
+  const { user: authUser, isLoadingUser } = useAuth();
+  const [posts, setposts] = useState<PostType[]>([]);
   const [groupedStories, setGroupedStories] = useState<UserStories[]>([]);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserType | null>(null);
   const [currentUserStories, setCurrentUserStories] = useState<StoryType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef(null);
   const router = useRouter();
 
@@ -40,7 +42,7 @@ export default function Home() {
     if (!authUser) return;
     
     try {
-      const response = await databases.listDocuments(
+      const response = await safeListDocuments(
         databaseId,
         usersCollectionId,
         // [Query.equal('userID', authUser.$id)]
@@ -49,12 +51,13 @@ export default function Home() {
       setCurrentUserProfile(userProfile);
     } catch (error) {
       console.error('Error fetching current user profile:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load user profile');
     }
   };
 
   const fetchPosts = async () => {
     try {
-      const respond = await databases.listDocuments(
+      const respond = await safeListDocuments(
         databaseId,
         postsCollectionId,
         // [Query.limit(50)]
@@ -63,12 +66,13 @@ export default function Home() {
       setposts(shuffledPosts as PostType[]);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load posts');
     }
   };
 
   const fetchStories = async () => {
     try {
-      const respond = await databases.listDocuments(
+      const respond = await safeListDocuments(
         databaseId,
         storiesCollectionId,
         // [Query.limit(50)]
@@ -101,27 +105,75 @@ export default function Home() {
       setGroupedStories(Object.values(storiesByUser));
     } catch (error) {
       console.error('Error fetching stories:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load stories');
     }
   };
-  
+
+  const loadAllData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await Promise.all([
+        fetchCurrentUserProfile(),
+        fetchPosts(),
+        fetchStories()
+      ]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load content');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchCurrentUserProfile();
-    fetchPosts();
-    fetchStories();
-  }, [authUser]);
+    if (authUser && !isLoadingUser) {
+      loadAllData();
+    } else if (!authUser && !isLoadingUser) {
+      setIsLoading(false);
+    }
+  }, [authUser, isLoadingUser]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchCurrentUserProfile();
-    await fetchPosts();
-    await fetchStories();
-    setRefreshing(false);
+    setError(null);
+    try {
+      await Promise.all([
+        fetchCurrentUserProfile(),
+        fetchPosts(),
+        fetchStories()
+      ]);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to refresh content');
+    } finally {
+      setRefreshing(false);
+    }
   }, [authUser]);
 
   const handleAddStory = () => {
     router.push('/addStory');
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0095f6" />
+        <Text style={styles.loadingText}>جاري التحميل...</Text>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.retryText} onPress={loadAllData}>إعادة المحاولة</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -200,36 +252,32 @@ export default function Home() {
             ))}
           </ScrollView>
         </View>
-        {/* <Text style={{
-            fontSize: 20,
-            fontFamily: "Rubik-Medium",
-            marginBottom: 10,
-            textAlign: "right",
-            width: "100%",
-            paddingHorizontal: 10,
-          }}>
-          أحدث المنشورات
-        </Text> */}
         <View id="postView" style={{
           width: "100%",
           padding: 0,
         }}>
-          {posts && posts.map((post) => (
-            <Post
-              key={post.$id}
-              postID={post.$id}
-              title={post.title}
-              content={post.content}
-              user={post.user}
-              image={post.images}
-              link={post.link}
-              video={post.video}
-              createdAt={post.$createdAt}
-              isActive={activePostId === post.$id}
-              community={post.community}
-              onPlay={() => setActivePostId(post.$id)}
-            />
-          ))}
+          {posts && posts.length > 0 ? (
+            posts.map((post) => (
+              <Post
+                key={post.$id}
+                postID={post.$id}
+                title={post.title}
+                content={post.content}
+                user={post.user}
+                image={post.images}
+                link={post.link}
+                video={post.video}
+                createdAt={post.$createdAt}
+                isActive={activePostId === post.$id}
+                community={post.community}
+                onPlay={() => setActivePostId(post.$id)}
+              />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>لا توجد منشورات متاحة</Text>
+            </View>
+          )}
         </View>
       </View>
     </ScrollView>
@@ -242,5 +290,49 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 0,
     backgroundColor: "white",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontFamily: "Rubik-Regular",
+    color: "#666",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    fontFamily: "Rubik-Regular",
+    color: "#ff4444",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryText: {
+    fontSize: 16,
+    fontFamily: "Rubik-Regular",
+    color: "#0095f6",
+    textDecorationLine: "underline",
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontFamily: "Rubik-Regular",
+    color: "#666",
+    textAlign: "center",
   }
 });
