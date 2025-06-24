@@ -59,7 +59,7 @@ export default function Explore() {
               <Image source={{ uri: user.userProfile }} style={styles.avatar} />
               <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
               <Text style={styles.userUsername} numberOfLines={1}>@{user.username}</Text>
-              <Pressable style={styles.followButton}><Text style={{ color: "white", fontFamily: "Rubik-Medium" }}>متابعة</Text></Pressable>
+              <Pressable style={styles.followButton}><Text style={{ color: "white"}}>متابعة</Text></Pressable>
             </View>
           ))}
         </ScrollView>
@@ -90,26 +90,6 @@ export default function Explore() {
   );
 }
 
-// Simple video preview (thumbnail or fallback)
-function VideoPreview({ videoUrl }: { videoUrl: string }) {
-  return (
-    <View style={{ width: 120, height: 180, backgroundColor: '#eee', borderRadius: 12, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-      <Video
-        source={{ uri: videoUrl }}
-        style={{ width: 120, height: 180, position: 'absolute', top: 0, left: 0 }}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay={false}
-        isMuted
-        usePoster
-        posterStyle={{ width: 120, height: 180 }}
-      />
-      <View style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center', width: 120, height: 180 }}>
-        <Play size={24} color="#fff" weight="fill" />
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -121,13 +101,13 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     backgroundColor: "#f0f0f0",
-    fontFamily: "Rubik-Regular",
+    
     marginBottom: 16,
     fontSize: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: "Rubik-Medium",
+    
     marginVertical: 8,
     textAlign: "right",
   },
@@ -150,13 +130,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
   userName: {
-    fontFamily: "Rubik-Medium",
+    
     fontSize: 15,
     marginBottom: 2,
     textAlign: "center",
   },
   userUsername: {
-    fontFamily: "Rubik-Regular",
+    
     fontSize: 12,
     color: "gray",
     marginBottom: 8,
@@ -185,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
   communityName: {
-    fontFamily: "Rubik-Medium",
+    
     fontSize: 15,
     textAlign: "center",
   },
@@ -198,7 +178,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   videoTitle: {
-    fontFamily: "Rubik-Medium",
+    
     fontSize: 0,
     marginTop: 8,
     textAlign: "center",

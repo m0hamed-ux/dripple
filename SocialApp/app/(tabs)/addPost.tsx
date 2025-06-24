@@ -167,7 +167,7 @@ export default function AppPost() {
         <View style={{padding: 8, paddingTop: 14, flexDirection: "row-reverse", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fff"}}>
           <Text style={{
             fontSize: 26,
-            fontFamily: "Rubik-Medium",
+            
             textAlign: "right",
             color: "#222"
           }}>منشور جديد</Text>
@@ -181,7 +181,7 @@ export default function AppPost() {
             }}>
               <Text style={{
                 fontSize: 18,
-                fontFamily: "Rubik-Medium",
+                
                 color: "white",
                 textAlign: "center"
               }}>نشر</Text>
@@ -192,7 +192,7 @@ export default function AppPost() {
           <TextInput value={title} onChangeText={setTitle} multiline placeholder="العنوان" maxLength={40}
             placeholderTextColor="#b0b0b0"
             style={{
-              fontFamily: "Rubik-Medium",
+              
               fontSize: 17,
               textAlign: "right",
               borderWidth: 1,
@@ -211,7 +211,7 @@ export default function AppPost() {
             onChangeText={setContent}
             placeholderTextColor="#b0b0b0"
             style={{
-              fontFamily: "Rubik-Regular",
+              
               fontSize: 15,
               textAlign: "right",
               borderWidth: 1,
@@ -230,7 +230,7 @@ export default function AppPost() {
               keyboardType="url"
               placeholderTextColor="#b0b0b0"
               style={{
-                fontFamily: "Rubik-Regular",
+                
                 fontSize: 15,
                 textAlign: "right",
                 borderWidth: 1,
@@ -413,7 +413,7 @@ export default function AppPost() {
                   }}>
                     <ActivityIndicator size="large" color="#0095f6" />
                   </View>
-                  <Text style={{ color: "#0095f6", fontSize: 15, fontFamily: "Rubik-Medium", marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
+                  <Text style={{ color: "#0095f6", fontSize: 15,  marginTop: 2, textAlign: "center", letterSpacing: 0.2 }}>جاري تحميل الفيديو...</Text>
                 </Animated.View>
               )}
               {!video && !isVideoLoading && (
@@ -434,7 +434,7 @@ export default function AppPost() {
           )}
           {error && (
             <Text style={{
-              fontFamily: "Rubik-Regular",
+              
               textAlign: "center",
               color: '#0095f6',
               marginBottom: 10,

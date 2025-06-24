@@ -170,7 +170,7 @@ export default function ConfigureAccount() {
       }}>
         <Text style={{ color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}>إعداد الحساب</Text>
         <Text style={{
-          fontFamily: "Rubik-Regular",
+          
           textAlign: "right",
           marginBottom: 5,
           paddingLeft: "20%",
@@ -199,7 +199,7 @@ export default function ConfigureAccount() {
           value={name}
           onChangeText={setName}
           placeholder={namePlaceholder}
-          style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 10}}
+          style={{ width: "100%", marginBottom: 10}}
           mode="outlined"
           activeOutlineColor="#0095f6"
           textAlign="right"
@@ -208,7 +208,7 @@ export default function ConfigureAccount() {
           label="نبذة عنك"
           value={bio}
           onChangeText={setBio}
-          style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 15}}
+          style={{ width: "100%", marginBottom: 15}}
           mode="outlined"
           activeOutlineColor="#0095f6"
           multiline
@@ -224,7 +224,7 @@ export default function ConfigureAccount() {
           }}
           onBlur={() => checkUsernameAvailability(username)}
           placeholder={usernamePlaceholder}
-          style={{fontFamily: "Rubik-Regular", width: "100%", marginBottom: 10}}
+          style={{ width: "100%", marginBottom: 10}}
           mode="outlined"
           activeOutlineColor="#0095f6"
           textAlign="right"
@@ -240,7 +240,7 @@ export default function ConfigureAccount() {
           <Text style={{ color: 'green', fontFamily: 'Rubik-Regular', marginBottom: 5, textAlign: 'right' }}>اسم المستخدم متاح</Text>
         )}
         {error && <Text style={{
-          fontFamily: "Rubik-Regular",
+          
           textAlign: "center",
           color: '#0095f6',
           marginBottom: 10,
@@ -262,7 +262,7 @@ export default function ConfigureAccount() {
             marginTop: 0,
           }}
         >
-          <Text style={{fontFamily: "Rubik-Regular", color: "white"}}>حفظ</Text>
+          <Text style={{ color: "white"}}>حفظ</Text>
         </Button>
       </View>
     </KeyboardAvoidingView>

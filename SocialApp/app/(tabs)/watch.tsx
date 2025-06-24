@@ -318,7 +318,7 @@ export default function Watch() {
                   <Pressable onPress={() => setCommentModal({ visible: false, postId: null })} style={{ position: 'absolute', right: 16, padding: 8 }}>
                     <Text style={{ fontSize: 22, color: '#222' }}></Text>
                   </Pressable>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center', flex: 1, fontFamily: 'Rubik-Medium' }}>التعليقات</Text>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center', flex: 1}}>التعليقات</Text>
                 </View>
                 <View style={{ height: 1, backgroundColor: '#eee', marginBottom: 0 }} />
                 {/* Comments List */}

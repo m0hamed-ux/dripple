@@ -1,9 +1,27 @@
-import { Stack, useRouter} from "expo-router";
-import { useEffect } from "react";
+import { SplashScreen, Stack, useRouter} from "expo-router";
+import { useEffect, useState } from "react";
 import { Auth } from "../lib/auth";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Font from "expo-font";
 
 export default function RootLayout() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      await Font.loadAsync({
+        "Rubik-Regular": require("../assets/fonts/Rubik-Regular.ttf"),
+        "Rubik-Bold": require("../assets/fonts/Rubik-Bold.ttf"),
+        "Rubik-Medium": require("../assets/fonts/Rubik-Medium.ttf"),
+      });
+      setFontsLoaded(true);
+      await SplashScreen.hideAsync();
+    }
+
+    loadFonts();
+  }, []);
+
+  if (!fontsLoaded) return null;
   
   return ( 
       <Auth>

@@ -80,7 +80,7 @@ export default function Story({ user, stories }: StoryProps) {
               <Image source={{ uri: userimage }} style={styles.storyImage} />
             </View>
           </View>
-          <Text style={styles.username} numberOfLines={1}>{username}</Text>
+          <Text numberOfLines={1} ellipsizeMode="tail" style={styles.username} >{username}</Text>
         </View>
       </Pressable>
       <Modal

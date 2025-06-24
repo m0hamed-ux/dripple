@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { Bell, ChatTeardrop } from "phosphor-react-native";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Models } from "react-native-appwrite";
+import { Models, Query } from "react-native-appwrite";
 import MyStory from "../../components/myStory";
 import Post from "../../components/post";
 import Story from "../../components/story";
@@ -75,7 +75,11 @@ export default function Home() {
       const respond = await safeListDocuments(
         databaseId,
         storiesCollectionId,
-        // [Query.limit(50)]
+        [
+          Query.notEqual('userID', authUser ? authUser.$id : ''),
+          Query.orderDesc('$createdAt'),
+          Query.greaterThan('$createdAt', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()), // Last 24 hours
+        ]
       );
       const stories = respond.documents as StoryType[];
       
@@ -188,7 +192,7 @@ export default function Home() {
         <View id="header" style={{width: "100%", paddingHorizontal: 10, paddingTop: 10, paddingBottom: 0, display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between"}}>
           <Text style={{
             fontSize: 24,
-            fontFamily: "Rubik-Medium",
+            
             marginBottom: 0,
             textAlign: "right",
           }}>الصفحة الرئيسية</Text>
@@ -300,7 +304,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    fontFamily: "Rubik-Regular",
+    
     color: "#666",
   },
   errorContainer: {
@@ -312,14 +316,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    fontFamily: "Rubik-Regular",
+    
     color: "#ff4444",
     textAlign: "center",
     marginBottom: 20,
   },
   retryText: {
     fontSize: 16,
-    fontFamily: "Rubik-Regular",
+    
     color: "#0095f6",
     textDecorationLine: "underline",
   },
@@ -331,7 +335,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
-    fontFamily: "Rubik-Regular",
+    
     color: "#666",
     textAlign: "center",
   }

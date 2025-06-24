@@ -173,7 +173,7 @@ export default function AddStory() {
         </Pressable>
         <Text style={{
           fontSize: 18,
-          fontFamily: "Rubik-Medium",
+          
           color: "#fff",
         }}>قصة جديدة</Text>
         <Pressable 
@@ -185,7 +185,7 @@ export default function AddStory() {
         >
           <Text style={{
             fontSize: 16,
-            fontFamily: "Rubik-Medium",
+            
             color: "#0095f6",
           }}>مشاركة</Text>
         </Pressable>
@@ -273,7 +273,7 @@ export default function AddStory() {
             <Text style={{
               color: "#fff",
               fontSize: 16,
-              fontFamily: "Rubik-Medium",
+              
               textAlign: "center"
             }}>
               جاري رفع {mediaType === "image" ? "الصورة" : "الفيديو"}...
@@ -323,7 +323,7 @@ export default function AddStory() {
                 <Text style={{
                   color: "#fff",
                   fontSize: 14,
-                  fontFamily: "Rubik-Medium",
+                  
                 }}>صورة</Text>
               </Pressable>
 
@@ -348,14 +348,14 @@ export default function AddStory() {
                 <Text style={{
                   color: "#fff",
                   fontSize: 14,
-                  fontFamily: "Rubik-Medium",
+                  
                 }}>فيديو</Text>
               </Pressable>
             </View>
             <Text style={{
               color: "#666",
               fontSize: 12,
-              fontFamily: "Rubik-Regular",
+              
               textAlign: "center",
               marginTop: 20,
             }}>
@@ -374,7 +374,7 @@ export default function AddStory() {
             multiline
             maxLength={100}
             style={{
-              fontFamily: "Rubik-Regular",
+              
               fontSize: 16,
               color: "#fff",
               backgroundColor: "#1a1a1a",
@@ -391,7 +391,7 @@ export default function AddStory() {
         {/* Error Message */}
         {error && (
           <Text style={{
-            fontFamily: "Rubik-Regular",
+            
             textAlign: "center",
             color: '#0095f6',
             marginTop: 15,

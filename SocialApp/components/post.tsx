@@ -1,4 +1,4 @@
-import { useFonts } from 'expo-font';
+import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView, } from 'expo-video';
 import { CaretLeft, ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
@@ -31,6 +31,7 @@ export default function Post({ postID, image, video, content, title, link, creat
   // const [author, setAuthor] = useState<UserType[]>();
   const [likesCount, setLikesCount] = useState<number>(0);
   const [userLiked, setUserLiked] = useState<boolean>(false);
+  const [liking, setLiking] = useState(false);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
@@ -39,8 +40,11 @@ export default function Post({ postID, image, video, content, title, link, creat
   const [sendingComment, setSendingComment] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const screenWidth = Dimensions.get('window').width;
   const contentWidth = screenWidth * 0.8 - 16;
+  const router = useRouter();
 
 
   useEffect(() => {
@@ -54,8 +58,7 @@ export default function Post({ postID, image, video, content, title, link, creat
   useEffect(() => {
     getLikesCount();
     isLiked();
-    fetchComments();
-  }, [userLiked, postID]);
+  }, [postID]);
 
   // Fetch comments when modal opens
   useEffect(() => {
@@ -119,7 +122,13 @@ export default function Post({ postID, image, video, content, title, link, creat
     }
   }
   const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+
     // Optimistic UI update
+    const previousUserLiked = userLiked;
+    const previousLikesCount = likesCount;
+
     if (userLiked) {
       setUserLiked(false);
       setLikesCount((prevCount) => prevCount - 1);
@@ -138,8 +147,8 @@ export default function Post({ postID, image, video, content, title, link, creat
         }
       } catch (error) {
         // Revert UI if failed
-        setUserLiked(true);
-        setLikesCount((prevCount) => prevCount + 1);
+        setUserLiked(previousUserLiked);
+        setLikesCount(previousLikesCount);
         console.error('Error unliking post:', error);
       }
     } else {
@@ -157,27 +166,23 @@ export default function Post({ postID, image, video, content, title, link, creat
         );
       } catch (error) {
         // Revert UI if failed
-        setUserLiked(false);
-        setLikesCount((prevCount) => prevCount - 1);
+        setUserLiked(previousUserLiked);
+        setLikesCount(previousLikesCount);
         console.error('Error liking post:', error);
       }
     }
+    setLiking(false);
   };
 
-  // PanResponder for swipe up
-  // const panResponder = useRef(
-  //   PanResponder.create({
-  //     onMoveShouldSetPanResponder: (_, gestureState) => {
-  //       // Detect vertical swipe up
-  //       return gestureState.dy < -20;
-  //     },
-  //     onPanResponderRelease: (_, gestureState) => {
-  //       if (gestureState.dy < -40) {
-  //         setCommentsVisible(true);
-  //       }
-  //     },
-  //   })
-  // ).current;
+  const openImageModal = (uri: string) => {
+    setSelectedImage(uri);
+    setImageModalVisible(true);
+  };
+
+  const closeImageModal = () => {
+    setImageModalVisible(false);
+    setSelectedImage(null);
+  };
 
   const fetchComments = async () => {
     setCommentsLoading(true);
@@ -282,7 +287,7 @@ export default function Post({ postID, image, video, content, title, link, creat
             <>
             <Text style={{
               fontSize: 14,
-              fontFamily: "Rubik-Regular",
+              
               color: "gray",
             }}>{community.name}</Text>
             <CaretLeft size={14} color="gray" weight="fill" />
@@ -292,10 +297,9 @@ export default function Post({ postID, image, video, content, title, link, creat
           { user?.verified && (
             <SealCheck size={14} color="#0095f6" weight="fill" />
           )}
-          <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",}}>{user?.name} </Text>
-          
+          <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",  textAlign: "left", fontWeight: 'bold'}}>{user?.name}</Text>
         </View>
-        <Text style={{fontSize: 10, fontFamily: "Rubik-Regular", marginTop: -4, color: "gray"}}>
+        <Text style={{fontSize: 10,  marginTop: 0, color: "gray"}}>
           {createdAt ? (() => {
             const now = new Date();
             const created = new Date(createdAt);
@@ -324,23 +328,33 @@ export default function Post({ postID, image, video, content, title, link, creat
             });
           })() : "تاريخ غير معروف"}
         </Text>
-        <Text style={{
-          fontSize: 16,
-          fontFamily: "Rubik-Medium",
-          marginBottom: 4,
-        }}>{title}</Text>
-        {content && content.length > 0 && (
+        <Pressable onPress={() => router.push({ pathname: "/postDetails", params: { id: postID } })}>
+          <Text style={{
+            fontSize: 16,
+            fontFamily: "Rubik-Medium",
+            textAlign: "right",
+            marginBottom: 4,
+          }}>{title}</Text>
+          {content && content.length > 0 && (
             <Text style={{
               fontSize: 14,
-              fontFamily: "Rubik-regular",
               marginBottom: 4,
               textAlign: "right",
-            }}>{content}</Text>
-        )}
+              fontFamily: "Rubik-Regular",
+            }}>
+              {content.length > 100 ? (
+              <>
+                {content.slice(0, 100) + "..."}
+                <Text style={{ color: "#0095f6", fontWeight: "bold" }}>  عرض المزيد</Text>
+              </>
+              ) : content}
+            </Text>
+          )}
+        </Pressable>
         {link && link.length > 0 && (
             <Text style={{
               fontSize: 14,
-              fontFamily: "Rubik-Medium",
+              
               marginBottom: 4,
               color: "#007AFF",
               textDecorationLine: "underline",
@@ -350,17 +364,19 @@ export default function Post({ postID, image, video, content, title, link, creat
         )}
         
         {typeof image === "string" && (
-          <Image
-            source={{ uri: image }}
-            style={{
-              width: contentWidth,
-              height: contentWidth,
-              borderRadius: 10,
-              overflow: "hidden",
-              marginBottom: 4,
-            }}
-            resizeMode="cover"
-          />
+          <Pressable onPress={() => openImageModal(image)}>
+            <Image
+              source={{ uri: image }}
+              style={{
+                width: contentWidth,
+                height: contentWidth,
+                borderRadius: 10,
+                overflow: "hidden",
+                marginBottom: 4,
+              }}
+              resizeMode="cover"
+            />
+          </Pressable>
         )}
         {Array.isArray(image) && image.length > 0 && (
           <View style={{ width: contentWidth, alignItems: "center", marginBottom: 8 }}>
@@ -377,17 +393,19 @@ export default function Post({ postID, image, video, content, title, link, creat
                 setCurrentImageIndex(index);
               }}
               renderItem={({ item }) => (
-                <View style={{ width: contentWidth, alignItems: 'center', justifyContent: 'center', height: contentWidth }}>
-                  <Image
-                    source={{ uri: item }}
-                    style={{
-                      width: contentWidth,
-                      height: contentWidth,
-                      borderRadius: 12,
-                    }}
-                    resizeMode='cover'
-                  />
-                </View>
+                <Pressable onPress={() => openImageModal(item)}>
+                  <View style={{ width: contentWidth, alignItems: 'center', justifyContent: 'center', height: contentWidth }}>
+                    <Image
+                      source={{ uri: item }}
+                      style={{
+                        width: contentWidth,
+                        height: contentWidth,
+                        borderRadius: 12,
+                      }}
+                      resizeMode='cover'
+                    />
+                  </View>
+                </Pressable>
               )}
               style={{ width: contentWidth }}
             />
@@ -518,9 +536,11 @@ export default function Post({ postID, image, video, content, title, link, creat
             </View>
             <Pressable
               onPress={handleLike}
+              disabled={liking}
               style={({ pressed }) => [
                 styles.iconFrame,
                 pressed && { transform: [{ scale: 0.85 }], opacity: 0.7 },
+                liking && { opacity: 0.5 }
               ]}
             >
               {userLiked ? (
@@ -554,7 +574,7 @@ export default function Post({ postID, image, video, content, title, link, creat
               <Pressable onPress={() => setCommentsVisible(false)} style={{ position: 'absolute', right: 16, padding: 8 }}>
                 <Text style={{ fontSize: 22, color: '#222' }}></Text>
               </Pressable>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center', flex: 1, fontFamily: 'Rubik-Medium' }}>التعليقات</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center', flex: 1 }}>التعليقات</Text>
             </View>
             <View style={{ height: 1, backgroundColor: '#eee', marginBottom: 0 }} />
 
@@ -680,6 +700,14 @@ export default function Post({ postID, image, video, content, title, link, creat
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      <Modal visible={imageModalVisible} transparent={true} onRequestClose={closeImageModal} animationType="fade">
+          <View style={styles.modalContainer}>
+              <Pressable style={styles.modalCloseButton} onPress={closeImageModal}>
+                  <Text style={styles.modalCloseButtonText}>✕</Text>
+              </Pressable>
+              <Image source={{ uri: selectedImage || undefined }} style={styles.fullscreenImage} resizeMode="contain" />
+          </View>
+      </Modal>
     </View>
   );
 }
@@ -694,5 +722,30 @@ const styles = StyleSheet.create({
   countText: {
     color: "gray",
     fontSize: 12,
-  }
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+      width: '100%',
+      height: '100%',
+  },
+  modalCloseButton: {
+      position: 'absolute',
+      top: 50,
+      right: 20,
+      zIndex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: 20,
+  },
+  modalCloseButtonText: {
+      color: 'white',
+      fontSize: 16,
+      fontWeight: 'bold',
+  },
 });
