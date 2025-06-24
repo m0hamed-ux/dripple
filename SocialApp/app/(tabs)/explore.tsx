@@ -1,90 +1,282 @@
-import { communitiesCollectionId, databaseId, databases, postsCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { communitiesCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, usersCollectionId } from "@/lib/appwrite";
 import { communityType, PostType, UserType } from "@/types/database.type";
 import { ResizeMode, Video } from 'expo-av';
-import { Play } from "phosphor-react-native";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from "expo-router";
+import { Fire, SealCheck, UserPlus } from "phosphor-react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, FlatList, Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Query } from 'react-native-appwrite';
 
 const DEFAULT_COMMUNITY_IMAGE = require("../../assets/images/partial-react-logo.png");
 
+const TrendingPostCard = ({ item }: { item: PostType }) => {
+  const router = useRouter();
+  const mediaUri = item.video 
+    ? item.video
+    : item.images 
+    ? (Array.isArray(item.images) ? item.images[0] : item.images)
+    : null;
+
+  return (
+    <Pressable onPress={() => router.push({ pathname: "/postDetails", params: { id: item.$id } })} style={styles.trendingCard}>
+      {mediaUri ? (
+        item.video ? (
+          <>
+            <Video
+              source={{ uri: mediaUri }}
+              style={styles.trendingMedia}
+              resizeMode={ResizeMode.COVER}
+              isMuted
+              shouldPlay={false}
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.8)']}
+              style={styles.gradient}
+            />
+          </>
+        ) : (
+          <ImageBackground source={{ uri: mediaUri }} style={styles.trendingMedia} resizeMode={ResizeMode.COVER}>
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.8)']}
+              style={styles.gradient}
+            />
+          </ImageBackground>
+        )
+      ) : (
+        <View style={[styles.trendingMedia, { backgroundColor: '#333' }]} />
+      )}
+      <View style={styles.trendingTextContainer}>
+        <Text style={styles.trendingTitle}>{item.title}</Text>
+        <Text style={styles.trendingSubtitle}>{item.content.substring(0, 30)}...</Text>
+        <View style={styles.trendingAuthorInfo}>
+          {item.user?.userProfile ? (
+            <Image source={{ uri: item.user.userProfile }} style={styles.trendingAuthorImage} />
+          ) : (
+            <Image source={DEFAULT_COMMUNITY_IMAGE} style={styles.trendingAuthorImage} />
+          )}
+          <Text style={styles.trendingAuthorName}>{item.user?.name || 'مستخدم غير معروف'}</Text>
+          {item.user?.verified && <SealCheck size={14} color="white" weight="fill" style={{ marginLeft: 4 }} />}
+        </View>
+      </View>
+    </Pressable>
+  );
+};
+
+const CommunityCard = ({ item }: { item: communityType }) => {
+  const imageUrl = item.image ? item.image : null;
+  return (
+      <View style={styles.communityCard}>
+          <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+                  {imageUrl ? (
+                      <Image source={{ uri: imageUrl }} style={styles.communityImage} />
+                  ) : (
+                      <View style={[styles.communityImage, { backgroundColor: '#333' }]} />
+                  )}
+                  <View>
+                      <Text style={styles.communityName}>{item.name}</Text>
+                  </View>
+              </View>
+              <Pressable style={styles.joinButton}>
+                  <Text style={styles.joinButtonText}>انضم</Text>
+              </Pressable>
+          </View>
+          <Text style={styles.communityDescription} numberOfLines={2}>
+              {item.description || `اكتشف عالم ${item.name} وانضم إلى مجتمعنا اليوم!`}
+          </Text>
+      </View>
+  );
+};
+
 export default function Explore() {
   const [search, setSearch] = useState("");
-  const [users, setUsers] = useState<UserType[]>([]);
-  const [communities, setCommunities] = useState<communityType[]>([]);
-  const [videos, setVideos] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trendingPosts, setTrendingPosts] = useState<PostType[]>([]);
+  const [communities, setCommunities] = useState<communityType[]>([]);
+  const [searchUsers, setSearchUsers] = useState<UserType[]>([]);
+  const [searchCommunities, setSearchCommunities] = useState<communityType[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimeout = useRef<number | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchExploreData = async () => {
       try {
-        // Fetch users
-        const usersRes = await databases.listDocuments(databaseId, usersCollectionId);
-        setUsers(usersRes.documents as UserType[]);
-        // Fetch communities
-        const commRes = await databases.listDocuments(databaseId, communitiesCollectionId);
-        setCommunities(commRes.documents as communityType[]);
-        // Fetch video posts
-        const postsRes = await databases.listDocuments(databaseId, postsCollectionId);
-        const videoPosts = (postsRes.documents as PostType[]).filter(post => post.video && post.video.length > 0);
-        setVideos(videoPosts);
-      } catch (e) {
-        // handle error
+        setLoading(true);
+
+        const now = new Date();
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const twentyFourHoursAgoISO = twentyFourHoursAgo.toISOString();
+
+        const postsPromise = databases.listDocuments(databaseId, postsCollectionId, [
+          Query.greaterThanEqual('$createdAt', twentyFourHoursAgoISO),
+          Query.or([
+            Query.isNotNull('images'),
+            Query.isNotNull('video')
+          ]),
+          Query.limit(50),
+        ]);
+
+        const communitiesPromise = databases.listDocuments(databaseId, communitiesCollectionId, [Query.limit(10)]);
+
+        const [postsResponse, communitiesResponse] = await Promise.all([postsPromise, communitiesPromise]);
+
+        const posts = postsResponse.documents as PostType[];
+
+        const postsWithLikes = await Promise.all(
+          posts.map(async (post) => {
+            const likesResponse = await databases.listDocuments(
+              databaseId,
+              likesCollectionId,
+              [Query.equal('posts', post.$id), Query.limit(1)]
+            );
+            return {
+              ...post,
+              likesCount: likesResponse.total,
+            };
+          })
+        );
+
+        postsWithLikes.sort((a, b) => b.likesCount - a.likesCount);
+        
+        const top10 = postsWithLikes.slice(0, 10);
+
+        setTrendingPosts(top10 as any);
+        setCommunities(communitiesResponse.documents as communityType[]);
+
+      } catch (error) {
+        console.error("Failed to fetch explore data:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    fetchData();
+    fetchExploreData();
   }, []);
 
-  // Filter by search
-  const filteredUsers = users.filter(u => u.name?.toLowerCase().includes(search.toLowerCase()) || u.username?.toLowerCase().includes(search.toLowerCase()));
-  const filteredCommunities = communities.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
-  const filteredVideos = videos.filter(v => v.title?.toLowerCase().includes(search.toLowerCase()));
+  // Search effect
+  useEffect(() => {
+    if (!search.trim()) {
+      setSearchUsers([]);
+      setSearchCommunities([]);
+      setSearchLoading(false);
+      return;
+    }
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    setSearchLoading(true);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const [usersRes, commsRes] = await Promise.all([
+          databases.listDocuments(databaseId, usersCollectionId, [
+            Query.or([
+              Query.contains('name', search),
+              Query.contains('username', search)
+            ]),
+            Query.limit(3)
+          ]),
+          databases.listDocuments(databaseId, communitiesCollectionId, [
+            Query.contains('name', search),
+            Query.limit(3)
+          ])
+        ]);
+        setSearchUsers(usersRes.documents as UserType[]);
+        setSearchCommunities(commsRes.documents as communityType[]);
+      } catch (e) {
+        setSearchUsers([]);
+        setSearchCommunities([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, [search]);
 
   return (
     <ScrollView style={{ backgroundColor: "white" }}>
       <View style={styles.container}>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="بحث..."
-          value={search}
-          onChangeText={setSearch}
-        />
-        {loading ? <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} /> : <>
-        {/* People You May Know */}
-        <Text style={styles.sectionTitle}>أشخاص قد تعرفهم</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalList}>
-          {filteredUsers.map(user => (
-            <View key={user.$id} style={styles.userCard}>
-              <Image source={{ uri: user.userProfile }} style={styles.avatar} />
-              <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-              <Text style={styles.userUsername} numberOfLines={1}>@{user.username}</Text>
-              <Pressable style={styles.followButton}><Text style={{ color: "white"}}>متابعة</Text></Pressable>
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="بحث..."
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
+        {/* Search Results */}
+        {search.trim() ? (
+          <View style={{marginBottom: 16, minHeight: 120}}>
+            {searchLoading ? (
+              <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} />
+            ) : (
+              <>
+                {searchUsers.length > 0 && (
+                  <View style={{marginBottom: 8}}>
+                    <Text style={{fontWeight: 'bold', fontSize: 16, marginBottom: 4, textAlign: 'right', paddingHorizontal: 8}}>مستخدمون</Text>
+                    <FlatList
+                      data={searchUsers}
+                      keyExtractor={item => item.$id}
+                      horizontal
+                      renderItem={({ item }) => (
+                        <View style={styles.userCard}>
+                          <Image source={{ uri: item.userProfile }} style={styles.avatar} />
+                          <Text style={styles.userName}>{item.name}</Text>
+                          <Text style={styles.userUsername}>@{item.username}</Text>
+                        </View>
+                      )}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.horizontalList}
+                    />
+                  </View>
+                )}
+                {searchCommunities.length > 0 && (
+                  <View>
+                    <Text style={{fontWeight: 'bold', fontSize: 16, marginBottom: 4, textAlign: 'right', paddingHorizontal: 8}}>مجتمعات</Text>
+                    <FlatList
+                      data={searchCommunities}
+                      keyExtractor={item => item.$id}
+                      horizontal
+                      renderItem={({ item }) => <CommunityCard item={item} />}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.horizontalList}
+                    />
+                  </View>
+                )}
+                {searchUsers.length === 0 && searchCommunities.length === 0 && !searchLoading && (
+                  <Text style={{textAlign: 'center', color: '#888', marginTop: 12}}>لا توجد نتائج</Text>
+                )}
+              </>
+            )}
+          </View>
+        ) : (
+          loading ? <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} /> : <>
+            <View style={{flexDirection: 'row-reverse', alignItems: 'center', gap: 8, paddingHorizontal: 12}}>
+              <Text style={styles.sectionTitle}>المنشورات الرائجة</Text>
+              <Fire size={24} color="#FF9500" />
             </View>
-          ))}
-        </ScrollView>
-        {/* Communities You May Like */}
-        <Text style={styles.sectionTitle}>مجتمعات قد تعجبك</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalList}>
-          {filteredCommunities.map(comm => (
-            <View key={comm.$id} style={styles.communityCard}>
-              <Image source={comm.image ? { uri: comm.image } : DEFAULT_COMMUNITY_IMAGE} style={styles.communityImage} />
-              <Text style={styles.communityName} numberOfLines={1}>{comm.name}</Text>
+            <FlatList
+              data={trendingPosts}
+              renderItem={({ item }) => <TrendingPostCard item={item} />}
+              keyExtractor={(item) => item.$id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+
+            <View style={{flexDirection: 'row-reverse', alignItems: 'center', gap: 8, marginTop: 24, paddingHorizontal: 8}}>
+              <Text style={styles.sectionTitle}>اكتشف مجتمعات</Text>
+              <UserPlus size={24} color="#007AFF" />
             </View>
-          ))}
-        </ScrollView>
-        {/* Videos You May Like
-        <Text style={styles.sectionTitle}>فيديوهات قد تعجبك</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalList}>
-          {filteredVideos.map(video => (
-            <View key={video.$id} style={styles.videoCard}>
-              {video.video ? (
-                <VideoPreview videoUrl={video.video} />
-              ) : null}
-            </View>
-          ))}
-        </ScrollView> */}
-        </>}
+            <FlatList
+              data={communities}
+              renderItem={({ item }) => <CommunityCard item={item} />}
+              keyExtractor={(item) => item.$id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          </>
+        )}
       </View>
     </ScrollView>
   );
@@ -93,26 +285,29 @@ export default function Explore() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 0,
     backgroundColor: "white",
+  },
+  searchBarContainer: {
+    padding: 12,
   },
   searchBar: {
     width: "100%",
     padding: 12,
     borderRadius: 8,
     backgroundColor: "#f0f0f0",
-    
-    marginBottom: 16,
     fontSize: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    
+    fontWeight: 'bold',
     marginVertical: 8,
     textAlign: "right",
   },
   horizontalList: {
-    marginBottom: 16,
+    marginBottom: 1,
+    paddingHorizontal: 12,
+    marginTop: 4,
   },
   userCard: {
     width: 120,
@@ -150,37 +345,97 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   communityCard: {
-    width: 120,
-    alignItems: "center",
-    backgroundColor: "#fafafa",
-    borderRadius: 12,
-    padding: 12,
-
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    width: 300,
+    marginRight: 12,
+    height: 120, 
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   communityImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginBottom: 8,
-    backgroundColor: "#eee",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginLeft: 12,
+    backgroundColor: '#E5E7EB',
   },
   communityName: {
-    
-    fontSize: 15,
-    textAlign: "center",
+    color: '#111827',
+    fontWeight: 'bold',
+    fontSize: 18,
+    textAlign: 'right',
   },
-  videoCard: {
-    width: 120,
-    alignItems: "center",
-    backgroundColor: "#fafafa",
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 12,
-  },
-  videoTitle: {
-    
-    fontSize: 0,
+  communityDescription: {
+    color: '#4B5563',
+    fontSize: 14,
     marginTop: 8,
-    textAlign: "center",
+    textAlign: 'right',
+  },
+  joinButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  joinButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  trendingCard: {
+    width: 240,
+    height: 320,
+    borderRadius: 16,
+    marginRight: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  trendingMedia: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  gradient: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  trendingTextContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+  },
+  trendingTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  trendingSubtitle: {
+    color: 'white',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  trendingAuthorInfo: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 4,
+  },
+  trendingAuthorImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+    backgroundColor: '#eee',
+  },
+  trendingAuthorName: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

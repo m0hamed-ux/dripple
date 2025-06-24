@@ -21,6 +21,7 @@ export interface communityType extends Models.Document {
     name: string;
     image?: string;
     banner?: string;
+    desciption?: string;
 }
 export interface LikeType extends Models.Document {
     postID: string;
