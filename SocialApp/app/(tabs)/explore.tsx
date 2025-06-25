@@ -1,4 +1,4 @@
-import { communitiesCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { account, communitiesCollectionId, communityMembersCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, safeCreateDocument, safeListDocuments, usersCollectionId } from "@/lib/appwrite";
 import { communityType, PostType, UserType } from "@/types/database.type";
 import { ResizeMode, Video } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { Fire, SealCheck, UserPlus } from "phosphor-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { Query } from 'react-native-appwrite';
+import { ID, Query } from 'react-native-appwrite';
 
 const DEFAULT_COMMUNITY_IMAGE = require("../../assets/images/partial-react-logo.png");
 const router = useRouter();
@@ -63,29 +63,45 @@ const TrendingPostCard = ({ item }: { item: PostType }) => {
   );
 };
 
-const CommunityCard = ({ item }: { item: communityType }) => {
+const CommunityCard = ({ item, isMember, onJoin, joinLoading }: { item: communityType, isMember: boolean, onJoin: () => void, joinLoading: boolean }) => {
   const imageUrl = item.image ? item.image : null;
   return (
-      <Pressable onPress={() => router.push({ pathname: "/community", params: { id: item.$id } })} style={styles.communityCard}>
-          <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
-                  {imageUrl ? (
-                      <Image source={{ uri: imageUrl }} style={styles.communityImage} />
-                  ) : (
-                      <View style={[styles.communityImage, { backgroundColor: '#333' }]} />
-                  )}
-                  <View>
-                      <Text style={styles.communityName}>{item.name}</Text>
-                  </View>
-              </View>
-              <Pressable style={styles.joinButton}>
-                  <Text style={styles.joinButtonText}>انضم</Text>
-              </Pressable>
+    <Pressable
+      style={styles.communityCard}
+      onPress={() => router.push({ pathname: '/community', params: { id: item.$id } })}
+    >
+      <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.communityImage} />
+          ) : (
+            <View style={[styles.communityImage, { backgroundColor: '#333' }]} />
+          )}
+          <View>
+            <Text style={styles.communityName}>{item.name}</Text>
           </View>
-          <Text style={styles.communityDescription} numberOfLines={2}>
-              {item.description || `اكتشف عالم ${item.name} وانضم إلى مجتمعنا اليوم!`}
+        </View>
+        <Pressable
+          style={styles.joinButton}
+          onPress={e => {
+            e.stopPropagation();
+            if (isMember) {
+              router.push({ pathname: '/community', params: { id: item.$id } });
+            } else {
+              onJoin();
+            }
+          }}
+          disabled={joinLoading}
+        >
+          <Text style={styles.joinButtonText}>
+            {joinLoading ? '...' : isMember ? 'عرض' : 'انضم'}
           </Text>
-      </Pressable>
+        </Pressable>
+      </View>
+      <Text style={styles.communityDescription} numberOfLines={2}>
+        {item.description || `اكتشف عالم ${item.name} وانضم إلى مجتمعنا اليوم!`}
+      </Text>
+    </Pressable>
   );
 };
 
@@ -98,6 +114,9 @@ export default function Explore() {
   const [searchCommunities, setSearchCommunities] = useState<communityType[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimeout = useRef<number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [joinedCommunityIds, setJoinedCommunityIds] = useState<string[]>([]);
+  const [joinLoadingId, setJoinLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchExploreData = async () => {
@@ -153,6 +172,28 @@ export default function Explore() {
     fetchExploreData();
   }, []);
 
+  useEffect(() => {
+    const fetchUserAndMemberships = async () => {
+      try {
+        const user = await account.get();
+        setCurrentUserId(user.$id);
+        const memberships = await safeListDocuments(
+          databaseId,
+          communityMembersCollectionId,
+          [Query.equal('user', user.$id)]
+        );
+        const ids = memberships.documents
+          .map((doc: any) => typeof doc.community === 'string' ? doc.community : doc.community?.$id)
+          .filter(Boolean);
+        setJoinedCommunityIds(ids);
+      } catch (e) {
+        setCurrentUserId(null);
+        setJoinedCommunityIds([]);
+      }
+    };
+    fetchUserAndMemberships();
+  }, []);
+
   // Search effect
   useEffect(() => {
     if (!search.trim()) {
@@ -191,6 +232,22 @@ export default function Explore() {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
     };
   }, [search]);
+
+  const handleJoin = async (communityId: string) => {
+    setJoinLoadingId(communityId);
+    try {
+      await safeCreateDocument(
+        databaseId,
+        communityMembersCollectionId,
+        ID.unique(),
+        { user: currentUserId, community: communityId }
+      );
+      setJoinedCommunityIds((prev) => [...prev, communityId]);
+    } catch (e) {
+      // Optionally show error
+    }
+    setJoinLoadingId(null);
+  };
 
   return (
     <ScrollView style={{ backgroundColor: "white" }}>
@@ -236,7 +293,14 @@ export default function Explore() {
                       data={searchCommunities}
                       keyExtractor={item => item.$id}
                       horizontal
-                      renderItem={({ item }) => <CommunityCard item={item} />}
+                      renderItem={({ item }) => (
+                        <CommunityCard
+                          item={item}
+                          isMember={joinedCommunityIds.includes(item.$id)}
+                          onJoin={() => handleJoin(item.$id)}
+                          joinLoading={joinLoadingId === item.$id}
+                        />
+                      )}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.horizontalList}
                     />
@@ -269,7 +333,14 @@ export default function Explore() {
             </View>
             <FlatList
               data={communities}
-              renderItem={({ item }) => <CommunityCard item={item} />}
+              renderItem={({ item }) => (
+                <CommunityCard
+                  item={item}
+                  isMember={joinedCommunityIds.includes(item.$id)}
+                  onJoin={() => handleJoin(item.$id)}
+                  joinLoading={joinLoadingId === item.$id}
+                />
+              )}
               keyExtractor={(item) => item.$id}
               horizontal
               showsHorizontalScrollIndicator={false}

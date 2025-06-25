@@ -1,4 +1,3 @@
-import { useFonts } from 'expo-font';
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, View } from "react-native";
@@ -106,19 +105,7 @@ export default function Login() {
                         onChangeText={(text) => (setConfirmPassword(text), setError(null))}
                     />
                 )}
-                {isSignUp && (
-                    <Text style={{
-                        fontFamily: "Rubik-Regular",
-                        textAlign: "right",
-                        marginBottom: 10,
-                        color: "#0095f6",
-                        fontSize: 14,
-                        marginTop: -10,
-                    }} onPress={() => {
-                        const router = useRouter();
-                        // router.replace("./forgot-password");
-                    }}>نسيت كلمة المرور؟</Text>
-                )}
+                
                 
                 <Button style={{
                     width: "100%",
@@ -133,6 +120,19 @@ export default function Login() {
                 }}>
                     <Text style={{ color: "white", fontFamily: "Rubik-Regular"}}>{isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 </Button>
+                {/* Privacy and Terms Notice */}
+                {!isSignUp && (
+                  <Text style={{
+                    fontFamily: "Rubik-Regular",
+                    textAlign: "center",
+                    color: "gray",
+                    fontSize: 13,
+                    marginTop: 12,
+                  }}>
+                    بإنشائك حسابًا، أنت توافق على 
+                    <Text style={{ color: "#0095f6", textDecorationLine: "underline" }} onPress={() => router.push("/privacy_terms")}>سياسة الخصوصية وشروط الاستخدام</Text>
+                  </Text>
+                )}
                 {error && (
                     <Text style={{
                         fontFamily: "Rubik-Regular",

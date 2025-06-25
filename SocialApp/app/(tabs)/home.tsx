@@ -1,9 +1,10 @@
 import { databaseId, postsCollectionId, safeListDocuments, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth";
 import { PostType, StoryType, UserType } from "@/types/database.type";
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
 import { Bell, ChatTeardrop } from "phosphor-react-native";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Models, Query } from "react-native-appwrite";
 import MyStory from "../../components/myStory";
@@ -159,6 +160,20 @@ export default function Home() {
     router.push('/addStory');
   };
 
+  // Handler to refresh posts after deletion
+  const handlePostDeleted = () => {
+    fetchPosts();
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Do nothing on focus
+      return () => {
+        setActivePostId(null); // Pause all videos on blur
+      };
+    }, [])
+  );
+
   // Show loading state
   if (isLoading) {
     return (
@@ -275,6 +290,7 @@ export default function Home() {
                 isActive={activePostId === post.$id}
                 community={post.community}
                 onPlay={() => setActivePostId(post.$id)}
+                onDelete={handlePostDeleted}
               />
             ))
           ) : (

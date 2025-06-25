@@ -1,8 +1,8 @@
 import { Account, Client, Databases, Messaging, Storage } from 'react-native-appwrite';
 
 export const client = new Client()
-  .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-  .setProject('6854346600203ab09001')
+  .setEndpoint('https://fra.cloud.appwrite.io/v1')
+  .setProject('685bce8d0026ef276c37')
   .setPlatform('com.dripple.app');
 
 export const account = new Account(client);
@@ -40,8 +40,9 @@ export const storiesCollectionId = '68587954003c15fa31ea';
 export const communitiesCollectionId = '68592878003110928a09';
 export const followersCollectionId = '685adf8200242cf814f2';
 export const communityMembersCollectionId = '685bc7230017860f8612';
+export const verificationReqCollectionId = '685c0de1002016153169';
 
-// Wrapper functions with error handling
+
 export const safeListDocuments = async (databaseId: string, collectionId: string, queries?: any[]) => {
   try {
     return await databases.listDocuments(databaseId, collectionId, queries);
@@ -65,29 +66,3 @@ export const safeDeleteDocument = async (databaseId: string, collectionId: strin
     throw new Error(handleApiError(error));
   }
 };
-
-// // get posts collection
-// export const postsCollection = databases.listDocuments(databaseId, postsCollectionId);
-// export const getPosts = async () => {
-//   try {
-//     const response = await databases.listDocuments(databaseId, postsCollectionId);
-//     return response.documents;
-//   } catch (error) {
-//     console.error('Error fetching posts:', error);
-//     throw error;
-//   }
-// }
- 
-
-// // add post
-// export const addPost = async (content: String) => {
-//   await databases.createDocument(
-//     databaseId,
-//     postsCollectionId,
-//     ID.unique(),
-//     {
-//       content: content,
-//     }
-//   );
-//   return true;
-// }

@@ -26,6 +26,7 @@ export interface communityType extends Models.Document {
     banner?: string;
     desciption?: string;
     memebers?: Array<UserType>;
+    admin?: UserType;
 }
 export interface LikeType extends Models.Document {
     postID: string;
@@ -43,4 +44,10 @@ export interface StoryType extends Models.Document {
     createdAt?: string;
     video?: string;
     text?: string;
+}
+export interface verificationReq extends Models.Document {
+    userID: UserType;
+    status: 'pending' | 'approved' | 'rejected';
+    idCardImage?: string;
+    fullName: string;
 }

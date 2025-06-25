@@ -56,6 +56,15 @@ export default function AppPost() {
             }
 
             const file = result.assets[0];
+            // 50MB = 52,428,800 bytes
+            if (file && typeof file.size === 'number' && file.size > 52428800) {
+                setError("الحد الأقصى لحجم الصورة هو 50 ميغابايت");
+                setIsImageLoading(false);
+                setTimeout(() => {
+                    setError(null);
+                }, 3000);
+                return;
+            }
             if (file && file.mimeType?.startsWith('image/')) {
                 setMediaType('image');
                 await uploadImage(file);
@@ -76,7 +85,7 @@ export default function AppPost() {
                 size: image.size,
             }
         ).then((response) => {
-            const url = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=6854346600203ab09001&mode=admin`;
+            const url = `https://fra.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=685bce8d0026ef276c37&mode=admin`;
             setImage((prev) => [...prev, url]);
             setIsImageLoading(false);
         })
@@ -98,6 +107,14 @@ export default function AppPost() {
             }
 
             const file = result.assets[0];
+            // 50MB = 52,428,800 bytes
+            if (file && typeof file.size === 'number' && file.size > 52428800) {
+                setError("الحد الأقصى لحجم الفيديو هو 50 ميغابايت");
+                setTimeout(() => {
+                    setError(null);
+                }, 3000);
+                return;
+            }
             if (file && file.mimeType?.startsWith('video/')) {
                 setIsVideoLoading(true);
                 setMediaType('video');
@@ -122,7 +139,7 @@ export default function AppPost() {
                 size: video.size,
             }
         ).then((response) => {
-            const url = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=6854346600203ab09001&mode=admin`;
+            const url = `https://fra.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=685bce8d0026ef276c37&mode=admin`;
             setIsVideoLoading(false);
             setVideo(url);
         })
@@ -242,6 +259,17 @@ export default function AppPost() {
               }}
             />
           )}
+          {/** Max file size label */}
+          <Text style={{
+            fontSize: 13,
+            color: '#a3a3a3',
+            textAlign: 'right',
+            marginTop: 10,
+            marginBottom: 0,
+            marginRight: 2
+          }}>
+            الحد الأقصى لحجم الصورة أو الفيديو هو 50 ميغابايت
+          </Text>
           <View style={{flexDirection: "row-reverse", justifyContent: "flex-end", gap: 18, marginTop: 18}}>
             <TouchableOpacity onPress={pickImage} style={{padding: 8, borderRadius: 50, backgroundColor: mediaType === "image" ? "#e6f2fb" : "#f2f2f2"}} activeOpacity={0.7}>
               <Images size={28} color={mediaType === "image" ? '#0095f6' : '#a3a3a3'} weight="bold" />

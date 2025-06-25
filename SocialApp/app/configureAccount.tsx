@@ -78,7 +78,7 @@ export default function ConfigureAccount() {
           size: image.size,
         }
       );
-      const url = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=6854346600203ab09001&mode=admin`;
+      const url = `https://fra.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=685bce8d0026ef276c37&mode=admin`;
       setProfileImage(url);
     } catch (error) {
       setError('حدث خطأ أثناء رفع الصورة');

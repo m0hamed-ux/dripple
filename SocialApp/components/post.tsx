@@ -1,10 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView, } from 'expo-video';
 import { CaretLeft, ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { account, commentsCollectionId, databaseId, databases, likesCollectionId, usersCollectionId } from "../lib/appwrite";
+import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, safeDeleteDocument, usersCollectionId } from "../lib/appwrite";
 import { communityType, UserType } from "../types/database.type";
 
 
@@ -21,8 +22,9 @@ type PostProps = {
   community?: communityType;
   user?: UserType;
   onPlay?: () => void;
+  onDelete?: () => void;
 };
-export default function Post({ postID, image, video, content, title, link, createdAt, isActive, community, user, onPlay }: PostProps) {
+export default function Post({ postID, image, video, content, title, link, createdAt, isActive, community, user, onPlay, onDelete }: PostProps) {
   const videoLink = video && video.length > 0 ? video : "https://www.w3schools.com/html/mov_bbb.mp4";
   const player = useVideoPlayer(videoLink, (player) => {
     player.loop = true;
@@ -42,6 +44,8 @@ export default function Post({ postID, image, video, content, title, link, creat
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [actionMenuVisible, setActionMenuVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const screenWidth = Dimensions.get('window').width;
   const contentWidth = screenWidth * 0.8 - 16;
   const router = useRouter();
@@ -53,6 +57,9 @@ export default function Post({ postID, image, video, content, title, link, creat
     } else {
       player.pause();
     }
+    return () => {
+      player.pause(); // Ensure video is paused on unmount
+    };
   }, [isActive, player]);
 
   useEffect(() => {
@@ -240,6 +247,24 @@ export default function Post({ postID, image, video, content, title, link, creat
     })
   ).current;
 
+  // Helper: is current user the post writer?
+  const isPostWriter = currentUser && user && (currentUser.userID === user.userID);
+
+  // Delete post handler
+  const handleDeletePost = async () => {
+    setDeleting(true);
+    try {
+      await safeDeleteDocument(databaseId, postsCollectionId, postID);
+      setActionMenuVisible(false);
+      if (onDelete) onDelete();
+      else router.replace('/');
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <View
       // {...panResponder.panHandlers}
@@ -254,6 +279,12 @@ export default function Post({ postID, image, video, content, title, link, creat
         paddingLeft: 10,
       }}
     >
+      {/* Post action menu trigger (only for post writer) */}
+      {isPostWriter && (
+        <Pressable onPress={() => setActionMenuVisible(true)} style={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}>
+          <Ionicons name="ellipsis-vertical" size={22} color="#222" />
+        </Pressable>
+      )}
       <Pressable onPress={() => router.push({ pathname: "/userProfile", params: { id: user?.$id } })} id="avatarFrame"
         style={{
           width: "20%",
@@ -284,15 +315,14 @@ export default function Post({ postID, image, video, content, title, link, creat
           gap: 4,
         }}>
           {community && (
-            <>
-            <Text style={{
-              fontSize: 14,
-              
-              color: "gray",
-            }}>{community.name}</Text>
-            <CaretLeft size={14} color="gray" weight="fill" />
-            </>
+            <Pressable onPress={() => router.push({ pathname: "/community", params: { id: community.$id } })}>
+              <Text style={{
+                fontSize: 14,
+                color: "gray",
+              }}>{community.name}</Text>
+            </Pressable>
           )}
+          {community && <CaretLeft size={14} color="gray" weight="fill" />}
 
           { user?.verified && (
             <SealCheck size={14} color="#0095f6" weight="fill" />
@@ -710,6 +740,24 @@ export default function Post({ postID, image, video, content, title, link, creat
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Post Action Modal */}
+      <Modal
+        visible={actionMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActionMenuVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setActionMenuVisible(false)}>
+          <View style={styles.menuModal}>
+            <Pressable style={styles.menuItem} onPress={handleDeletePost} disabled={deleting}>
+              <Text style={[styles.menuText, { color: '#d00' }]}>{deleting ? 'جاري الحذف...' : 'حذف المنشور'}</Text>
+            </Pressable>
+            <Pressable style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: '#eee' }]} onPress={() => setActionMenuVisible(false)}>
+              <Text style={[styles.menuText, { color: '#d00' }]}>إلغاء</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
       <Modal visible={imageModalVisible} transparent={true} onRequestClose={closeImageModal} animationType="fade">
           <View style={styles.modalContainer}>
               <Pressable style={styles.modalCloseButton} onPress={closeImageModal}>
@@ -757,5 +805,23 @@ const styles = StyleSheet.create({
       color: 'white',
       fontSize: 16,
       fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuModal: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 16,
+  },
+  menuItem: {
+    padding: 12,
+  },
+  menuText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UsersThree } from 'phosphor-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -126,9 +127,18 @@ export default function Community() {
   };
 
   const handleAddPost = () => {
-    // Navigate to add post screen, passing community id
-    router.push({ pathname: '/addPost', params: { communityId: id } });
+    // Navigate to add post to community screen, passing community id as 'id'
+    router.push({ pathname: '/addPostToCommunity', params: { id } });
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Do nothing on focus
+      return () => {
+        setActivePostId(null); // Pause all videos on blur
+      };
+    }, [])
+  );
 
   if (loading) {
     return (
