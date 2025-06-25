@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const APP_NAME = 'SocialApp';
+const APP_NAME = 'TribbleBook';
 const APP_VERSION = '1.0.0';
 const APP_DESCRIPTION = 'سوشيال آب هو تطبيق تواصل اجتماعي عصري يتيح لك مشاركة المنشورات والقصص، الانضمام إلى المجتمعات، والتواصل مع أصدقاء جدد بسهولة وأمان. استمتع بتجربة تفاعلية غنية وابقَ على اتصال مع كل ما يهمك في مكان واحد.';
 const APP_ICON = require('../assets/images/icon.png');

@@ -3,7 +3,7 @@ import { Account, Client, Databases, Messaging, Storage } from 'react-native-app
 export const client = new Client()
   .setEndpoint('https://fra.cloud.appwrite.io/v1')
   .setProject('685bce8d0026ef276c37')
-  .setPlatform('com.dripple.app');
+  .setPlatform('com.tribblebook.app');
 
 export const account = new Account(client);
 export const databases = new Databases(client);

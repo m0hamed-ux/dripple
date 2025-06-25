@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView, } from 'expo-video';
 import { CaretLeft, ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
 import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, safeDeleteDocument, usersCollectionId } from "../lib/appwrite";
@@ -55,10 +55,22 @@ export default function Post({ postID, image, video, content, title, link, creat
     if (isActive) {
       player.play();
     } else {
-      player.pause();
+      if (player && typeof player.pause === 'function') {
+        try {
+          player.pause();
+        } catch (e) {
+          // Ignore if player is already released
+        }
+      }
     }
     return () => {
-      player.pause(); // Ensure video is paused on unmount
+      if (player && typeof player.pause === 'function') {
+        try {
+          player.pause();
+        } catch (e) {
+          // Ignore if player is already released
+        }
+      }
     };
   }, [isActive, player]);
 

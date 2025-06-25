@@ -40,10 +40,12 @@ export default function Home() {
         }}>
             <Text style={{
                 fontSize: 24,
-                color: "white",
+                width: "100%",
                 textAlign: "center",
-                fontFamily: "logoFont",
-            }}>Dripple</Text>
+                fontFamily: "Rubik-Medium",
+                color: "white",
+                height: 100,
+            }}>tribblebook</Text>
         </View>
     );
 }

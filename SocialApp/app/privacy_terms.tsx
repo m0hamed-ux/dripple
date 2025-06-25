@@ -15,7 +15,7 @@ export default function PrivacyTerms() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>١. المقدمة</Text>
         <Text style={styles.text}>
-          مرحبًا بك في SocialApp! خصوصيتك مهمة بالنسبة لنا. توضح سياسة الخصوصية وشروط الاستخدام هذه كيف نجمع معلوماتك ونستخدمها ونفصح عنها ونحميها عند استخدامك لتطبيقنا. باستخدامك SocialApp، فإنك توافق على هذه الشروط.
+          مرحبًا بك في TribbleBook! خصوصيتك مهمة بالنسبة لنا. توضح سياسة الخصوصية وشروط الاستخدام هذه كيف نجمع معلوماتك ونستخدمها ونفصح عنها ونحميها عند استخدامك لتطبيقنا. باستخدامك TribbleBook، فإنك توافق على هذه الشروط.
         </Text>
         <Text style={styles.sectionTitle}>٢. المعلومات التي نجمعها</Text>
         <Text style={styles.text}>
@@ -60,11 +60,11 @@ export default function PrivacyTerms() {
         </Text>
         <Text style={styles.sectionTitle}>٩. التواصل معنا</Text>
         <Text style={styles.text}>
-          إذا كان لديك أي أسئلة أو استفسارات حول هذه السياسة، يرجى التواصل معنا عبر البريد الإلكتروني: support@socialapp.com
+          إذا كان لديك أي أسئلة أو استفسارات حول هذه السياسة، يرجى التواصل معنا عبر البريد الإلكتروني: support@TribbleBook.com
         </Text>
         <Text style={styles.sectionTitle}>١٠. شروط الاستخدام</Text>
         <Text style={styles.text}>
-          باستخدامك SocialApp، فإنك توافق على:
+          باستخدامك TribbleBook، فإنك توافق على:
           {"\n"}- استخدام التطبيق فقط للأغراض المشروعة
           {"\n"}- احترام حقوق وخصوصية المستخدمين الآخرين
           {"\n"}- عدم نشر محتوى ضار أو مسيء أو غير قانوني
@@ -79,7 +79,7 @@ export default function PrivacyTerms() {
           تخضع هذه الشروط لقوانين ولايتك القضائية. سيتم حل أي نزاعات وفقًا للقوانين المحلية.
         </Text>
         <Text style={styles.text}>
-          شكرًا لاستخدامك SocialApp!
+          شكرًا لاستخدامك TribbleBook!
         </Text>
       </ScrollView>
     </View>

@@ -1,10 +1,10 @@
 import { StoryType } from '@/types/database.type';
 import { ResizeMode, Video } from 'expo-av';
-import { useFonts } from 'expo-font';
-import { Plus } from 'phosphor-react-native';
+import { Plus, Trash } from 'phosphor-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageBackground, Modal, Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Models } from 'react-native-appwrite';
+import { databaseId, safeDeleteDocument, storiesCollectionId } from '../lib/appwrite';
 
 interface MyStoryProps {
   user: Models.Document;
@@ -18,6 +18,9 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
   const videoRef = useRef<Video>(null);
+  const [actionMenuVisible, setActionMenuVisible] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteSingle, setDeleteSingle] = useState(false);
 
   const hasStories = userStories && userStories.length > 0;
   const { userProfile: userimage, name: username } = user;
@@ -33,6 +36,45 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
     onAddStory?.();
   }
 
+  const handleLongPress = () => {
+    if (hasStories) {
+      setActionMenuVisible(true);
+    }
+  };
+
+  const handleDeleteStory = async () => {
+    if (!userStories || userStories.length === 0) return;
+    setDeleting(true);
+    try {
+      // Delete all stories for this user (long press action)
+      for (const story of userStories) {
+        await safeDeleteDocument(databaseId, storiesCollectionId, story.$id);
+      }
+      setActionMenuVisible(false);
+      setModalVisible(false);
+      setCurrentStoryIndex(0);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCurrentStory = async () => {
+    if (!userStories || userStories.length === 0) return;
+    setDeleting(true);
+    try {
+      const story = userStories[currentStoryIndex];
+      await safeDeleteDocument(databaseId, storiesCollectionId, story.$id);
+      setDeleteSingle(false);
+      setModalVisible(false);
+      setCurrentStoryIndex(0);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleNextStory = () => {
     if (currentStoryIndex < userStories!.length - 1) {
@@ -85,7 +127,7 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
 
   return (
     <>
-      <Pressable onPress={handlePress}>
+      <Pressable onPress={handlePress} onLongPress={handleLongPress}>
         <View style={styles.container}>
           <View style={hasStories ? styles.hasStoriesBorder : styles.noStoriesBorder}>
             <View style={styles.storyFrame}>
@@ -101,6 +143,44 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
         </View>
       </Pressable>
       
+      {/* Action Modal for deleting all stories */}
+      <Modal
+        visible={actionMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActionMenuVisible(false)}
+      >
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setActionMenuVisible(false)}>
+          <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 16, minWidth: 200 }}>
+            <Pressable style={{ padding: 12 }} onPress={handleDeleteStory} disabled={deleting}>
+              <Text style={{ color: '#d00', fontWeight: 'bold', fontSize: 16 }}>{deleting ? 'جاري الحذف...' : 'حذف كل القصص'}</Text>
+            </Pressable>
+            <Pressable style={{ padding: 12, borderTopWidth: 1, borderTopColor: '#eee' }} onPress={() => setActionMenuVisible(false)}>
+              <Text style={{ color: '#d00', fontWeight: 'bold', fontSize: 16 }}>إلغاء</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+      
+      {/* Action Modal for deleting single story from preview */}
+      <Modal
+        visible={deleteSingle}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteSingle(false)}
+      >
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setDeleteSingle(false)}>
+          <View style={{ backgroundColor: 'white', borderRadius: 10, padding: 16, minWidth: 200 }}>
+            <Pressable style={{ padding: 12 }} onPress={handleDeleteCurrentStory} disabled={deleting}>
+              <Text style={{ color: '#d00', fontWeight: 'bold', fontSize: 16 }}>{deleting ? 'جاري الحذف...' : 'حذف هذه القصة'}</Text>
+            </Pressable>
+            <Pressable style={{ padding: 12, borderTopWidth: 1, borderTopColor: '#eee' }} onPress={() => setDeleteSingle(false)}>
+              <Text style={{ color: '#d00', fontWeight: 'bold', fontSize: 16 }}>إلغاء</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+      
       {hasStories && (
         <Modal
           animationType="slide"
@@ -111,6 +191,12 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
           }}
         >
           <SafeAreaView style={styles.modalContainer}>
+            {/* Show trash icon for delete in preview */}
+            <View style={{ position: 'absolute', top: 30, left: 20, zIndex: 10 }}>
+              <Pressable onPress={() => setDeleteSingle(true)}>
+                <Trash size={28} color="#d00" weight="bold" />
+              </Pressable>
+            </View>
             {isVideo ? (
               <View style={styles.videoContainer}>
                 <Video

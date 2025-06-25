@@ -207,43 +207,12 @@ export default function Home() {
         <View id="header" style={{width: "100%", paddingHorizontal: 10, paddingTop: 10, paddingBottom: 0, display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between"}}>
           <Text style={{
             fontSize: 24,
-            
+            fontFamily: "Rubik-Medium",
             marginBottom: 0,
             textAlign: "right",
           }}>الصفحة الرئيسية</Text>
             <View style={{display: "flex", flexDirection: "row-reverse", gap: 10, alignItems: "center"}}>
-              <View style={{position: "relative"}}>
-                <Bell size={24} color="gray" weight="fill" />
-                <View
-                style={{
-                  position: "absolute",
-                  top: 2,
-                  right: 2,
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: '#0095f6',
-                  borderWidth: 1,
-                  borderColor: "white",
-                }}
-                />
-              </View>
-              <View style={{position: "relative"}}>
-                <ChatTeardrop size={24} color="gray" weight="fill" />
-                <View
-                style={{
-                  position: "absolute",
-                  top: 2,
-                  right: 2,
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: '#0095f6',
-                  borderWidth: 1,
-                  borderColor: "white",
-                }}
-                />
-              </View>
+              
             </View>
         </View>
         <View style={{ width: "100%", marginBottom: 10, paddingBottom: 0 }}>

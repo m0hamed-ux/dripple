@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "SocialApp",
-    "slug": "SocialApp",
+    "name": "TribbleBook",
+    "slug": "tribblebook",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "socialapp",
+    "icon": "./assets/images/appIcon.jpg",
+    "scheme": "TribbleBook",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,23 +13,23 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/appIcon.jpg",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.dripple.app"
+      "package": "com.tribblebook.app"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/appIcon.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/appIcon.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -44,7 +44,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "1aa28744-f135-40c7-a3f4-bd5a237ec02f"
+        "projectId": "ee15706e-8fd2-456d-8122-4e8f6ea23c65"
       }
     }
   }

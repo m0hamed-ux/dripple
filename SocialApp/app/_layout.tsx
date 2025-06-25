@@ -3,10 +3,12 @@ import { SplashScreen, Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Auth } from "../lib/auth";
+import { I18nManager } from "react-native";
 
 export default function RootLayout() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
-
+  I18nManager.forceRTL(false);
+  I18nManager.allowRTL(false);
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
