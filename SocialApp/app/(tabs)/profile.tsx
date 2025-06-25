@@ -1,9 +1,9 @@
 import { databaseId, databases, postsCollectionId, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
 import { PostType, StoryType, UserType } from "@/types/database.type";
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { I18nManager, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Animated, Easing, I18nManager, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import MyStory from "../../components/myStory";
 import Post from "../../components/post";
 import { useAuth } from "../../lib/auth";
@@ -17,7 +17,8 @@ export default function Profile() {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [stories, setStories] = useState<StoryType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const drawerAnim = React.useRef(new Animated.Value(-300)).current; // Drawer width
 
   const fetchProfile = async () => {
     if (!authUser) return;
@@ -66,8 +67,82 @@ export default function Profile() {
     setRefreshing(false);
   }, [authUser]);
 
+  // Drawer open/close animation (now from right)
+  const openDrawer = () => {
+    setDrawerVisible(true);
+    Animated.timing(drawerAnim, {
+      toValue: 0,
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  };
+  const closeDrawer = () => {
+    Animated.timing(drawerAnim, {
+      toValue: -300,
+      duration: 200,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => setDrawerVisible(false));
+  };
+
   return (
     <>
+      {/* Hamburger icon to open drawer (now on right) */}
+      <View style={{ position: 'absolute', top: 36, right: 18, zIndex: 20 }}>
+        <Pressable onPress={openDrawer}>
+          <Feather name="menu" size={28} color="#222" />
+        </Pressable>
+      </View>
+      {/* Drawer overlay and content (now from right) */}
+      {drawerVisible && (
+        <>
+          <Pressable style={styles.drawerOverlay} onPress={closeDrawer} />
+          <Animated.View style={[styles.drawer, { right: drawerAnim, left: undefined }]}>  
+            {/* User info at top with background */}
+            <View style={styles.drawerUserInfoBg}>
+              <View style={styles.drawerUserInfo}>
+                {profile && (
+                  <MyStory user={profile} userStories={stories} onAddStory={() => { closeDrawer(); router.push('/addStory'); }} />
+                )}
+                <Text style={styles.drawerUsername}>{profile?.username || 'اسم المستخدم'}</Text>
+                <Text style={styles.drawerName}>{profile?.name || ''}</Text>
+              </View>
+            </View>
+            {/* Drawer menu items with icons */}
+            <View style={styles.drawerMenu}>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); router.push('/configureAccount'); }}>
+                <Feather name="edit" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
+                <Text style={styles.menuText}>تعديل الحساب</Text>
+              </Pressable>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); router.push('/mycommunities'); }}>
+                <MaterialIcons name="groups" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
+                <Text style={styles.menuText}>مجتمعاتي</Text>
+              </Pressable>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); router.push('/reqVer'); }}>
+                <Feather name="check-circle" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
+                <Text style={styles.menuText}>طلب التحقق</Text>
+              </Pressable>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); router.push('/appInfo'); }}>
+                <Feather name="info" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
+                <Text style={styles.menuText}>معلومات التطبيق</Text>
+              </Pressable>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); router.push('/privacy_terms'); }}>
+                <Feather name="shield" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
+                <Text style={styles.menuText}>الخصوصية والشروط</Text>
+              </Pressable>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); alert('تغيير كلمة المرور قادم قريباً'); }}>
+                <Feather name="lock" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
+                <Text style={styles.menuText}>تغيير كلمة المرور</Text>
+              </Pressable>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); signOut(); router.push('/'); }}>
+                <Feather name="log-out" size={20} color="#d00" style={styles.drawerMenuIcon} />
+                <Text style={[styles.menuText, { color: '#d00' }]}>تسجيل الخروج</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </>
+      )}
       <ScrollView
         style={{ backgroundColor: "#fff" }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -75,10 +150,7 @@ export default function Profile() {
         contentContainerStyle={{ flexDirection: 'column', alignItems: 'stretch' }}
       >
         {/* Username at the top with menu button */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: 8, paddingHorizontal: 20 }}>
-          <Pressable onPress={() => setMenuVisible(true)} style={{ marginLeft: 8 }}>
-            <Ionicons name="ellipsis-vertical" size={22} color="#2220" />
-          </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, marginBottom: 8, paddingHorizontal: 20 }}>
           <Text style={styles.usernameTop}>
             {profile?.username
               ? profile.username.length > 14
@@ -86,9 +158,6 @@ export default function Profile() {
                 : profile.username
               : "اسم المستخدم"}
           </Text>
-          <Pressable onPress={() => setMenuVisible(true)} style={{ marginLeft: 8 }}>
-            <Ionicons name="ellipsis-vertical" size={22} color="#222" />
-          </Pressable>
         </View>
         {/* Profile row: MyStory in place of profile image, then stats */}
         <View style={styles.profileRow}>
@@ -151,40 +220,6 @@ export default function Profile() {
           )}
         </View>
       </ScrollView>
-      {/* Menu Modal */}
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
-          <View style={styles.menuModal}>
-            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/configureAccount'); }}>
-              <Text style={styles.menuText}>تعديل الحساب</Text>
-            </Pressable>
-            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/mycommunities'); }}>
-              <Text style={styles.menuText}>مجتمعاتي</Text>
-            </Pressable>
-           
-            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/reqVer'); }}>
-              <Text style={styles.menuText}>طلب التحقق</Text>
-            </Pressable>
-             <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/appInfo'); }}>
-              <Text style={styles.menuText}>معلومات التطبيق</Text>
-            </Pressable>
-            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); router.push('/privacy_terms'); }}>
-              <Text style={styles.menuText}>الخصوصية والشروط</Text>
-            </Pressable>
-            <Pressable style={styles.menuItem} onPress={() => { setMenuVisible(false); signOut(); router.push('/'); }}>
-              <Text style={[styles.menuText, { color: '#d00' }]}>تسجيل الخروج</Text>
-            </Pressable>
-            <Pressable style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: '#eee' }]} onPress={() => setMenuVisible(false)}>
-              <Text style={[styles.menuText, { color: '#d00' }]}>إلغاء</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
     </>
   );
 }
@@ -192,7 +227,7 @@ export default function Profile() {
 const styles = StyleSheet.create({
   usernameTop: {
     fontSize: 18,
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
     color: '#222',
     textAlign: 'center',
     marginTop: 16,
@@ -266,13 +301,13 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 16,
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
     color: '#222',
   },
   statLabel: {
     fontSize: 12,
     color: '#888',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   infoSection: {
     alignItems: 'flex-end',
@@ -290,7 +325,7 @@ const styles = StyleSheet.create({
   bio: {
     fontSize: 13,
     color: '#222',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     marginBottom: 2,
     textAlign: 'right',
     width: '100%',
@@ -316,9 +351,9 @@ const styles = StyleSheet.create({
   editBtnText: {
     color: 'white',
     textAlign: "center",
-    
     fontSize: 14,
     flex: 1,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
   },
   signOutBtn: {
     backgroundColor: '#eee',
@@ -330,8 +365,8 @@ const styles = StyleSheet.create({
   signOutBtnText: {
     color: '#222',
     textAlign: "center",
-    
     fontSize: 14,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   postsSection: {
     width: '100%',
@@ -342,7 +377,7 @@ const styles = StyleSheet.create({
   noPosts: {
     fontSize: 14,
     color: '#888',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     textAlign: 'center',
     marginTop: 16,
   },
@@ -353,32 +388,83 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
   },
-  modalOverlay: {
-    flex: 1,
+  drawerOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: '100%',
+    height: '100%',
     backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    zIndex: 19,
   },
-  menuModal: {
+  drawer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 300,
+    height: '100%',
     backgroundColor: '#fff',
-    borderRadius: 16,
-    width: '92%',
-    marginBottom: 32,
-    paddingVertical: 8,
-    elevation: 5,
+    zIndex: 20,
+    paddingTop: 0,
+    paddingHorizontal: 0,
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOffset: { width: -4, height: 0 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    overflow: 'hidden',
   },
-  menuItem: {
+  drawerUserInfoBg: {
+    backgroundColor: '#f3f7fa',
+    paddingTop: 36,
+    paddingBottom: 18,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  drawerUserInfo: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerUsername: {
+    fontSize: 18,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
+    color: '#222',
+    marginTop: 10,
+  },
+  drawerName: {
+    fontSize: 15,
+    color: '#888',
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  drawerMenu: {
+    marginTop: 18,
+    paddingHorizontal: 18,
+  },
+  drawerMenuItem: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    gap: 10,
+  },
+  drawerMenuIcon: {
+    marginLeft: 8,
+    marginRight: 0,
+  },
+  drawerCancel: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    marginTop: 18,
     paddingVertical: 16,
-    paddingHorizontal: 24,
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
   menuText: {
     fontSize: 16,
     color: '#222',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
 });

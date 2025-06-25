@@ -352,9 +352,9 @@ const styles = StyleSheet.create({
   },
   joinButtonText: {
     color: 'white',
-    fontWeight: 'bold',
     fontSize: 17,
     letterSpacing: 0.2,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
   },
   divider: {
     height: 1,
@@ -374,6 +374,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#666',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   errorContainer: {
     flex: 1,
@@ -387,11 +388,13 @@ const styles = StyleSheet.create({
     color: '#ff4444',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   retryText: {
     fontSize: 16,
     color: '#0095f6',
     textDecorationLine: 'underline',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   emptyState: {
     flex: 1,
@@ -403,5 +406,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
 });

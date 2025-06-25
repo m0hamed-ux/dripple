@@ -1,9 +1,9 @@
 import * as Font from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect, useState } from "react";
+import { I18nManager } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Auth } from "../lib/auth";
-import { I18nManager } from "react-native";
 
 export default function RootLayout() {
   const [fontsLoaded, setFontsLoaded] = useState(false);
@@ -12,9 +12,8 @@ export default function RootLayout() {
   useEffect(() => {
     async function loadFonts() {
       await Font.loadAsync({
-        "Rubik-Regular": require("../assets/fonts/Rubik-Regular.ttf"),
-        "Rubik-Bold": require("../assets/fonts/Rubik-Bold.ttf"),
-        "Rubik-Medium": require("../assets/fonts/Rubik-Medium.ttf"),
+        "ArbFONTS-Al-Jazeera-Arabic-Regular": require("../assets/fonts/ArbFONTS-Al-Jazeera-Arabic-Regular.ttf"),
+        "ArbFONTS-Al-Jazeera-Arabic-Bold": require("../assets/fonts/ArbFONTS-Al-Jazeera-Arabic-Bold.ttf"),
       });
       setFontsLoaded(true);
       await SplashScreen.hideAsync();

@@ -231,7 +231,7 @@ export default function ConfigureAccount() {
             fontSize: 26, 
             width: "100%", 
             textAlign: "right",
-            fontFamily: "Rubik-Medium",
+            fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
             marginBottom: 5
           }}>
             إعداد الحساب
@@ -244,7 +244,7 @@ export default function ConfigureAccount() {
             marginTop: 0,
             color: "gray",
             fontSize: 14,
-            fontFamily: "Rubik-Regular"
+            fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"
           }}>
             أدخل بياناتك لإكمال إعداد الحساب.
           </Text>
@@ -277,7 +277,7 @@ export default function ConfigureAccount() {
                   <ActivityIndicator size="large" color="#0095f6" />
                   <Text style={{ 
                     color: '#0095f6', 
-                    fontFamily: 'Rubik-Regular',
+                    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
                     fontSize: 12,
                     marginTop: 5
                   }}>
@@ -288,7 +288,7 @@ export default function ConfigureAccount() {
                 <View style={{ alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ 
                     color: '#0095f6', 
-                    fontFamily: 'Rubik-Regular',
+                    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
                     fontSize: 14,
                     textAlign: 'center'
                   }}>
@@ -296,7 +296,7 @@ export default function ConfigureAccount() {
                   </Text>
                   <Text style={{ 
                     color: '#6c757d', 
-                    fontFamily: 'Rubik-Regular',
+                    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
                     fontSize: 12,
                     textAlign: 'center',
                     marginTop: 5
@@ -319,13 +319,13 @@ export default function ConfigureAccount() {
             style={{ 
               width: "100%", 
               marginBottom: 15,
-              fontFamily: "Rubik-Regular"
+              fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"
             }}
             mode="outlined"
             activeOutlineColor="#0095f6"
             outlineColor="#e9ecef"
             textAlign="right"
-            contentStyle={{ fontFamily: "Rubik-Regular" }}
+            contentStyle={{ fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular" }}
           />
 
           <TextInput
@@ -339,14 +339,14 @@ export default function ConfigureAccount() {
             style={{ 
               width: "100%", 
               marginBottom: 10,
-              fontFamily: "Rubik-Regular"
+              fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"
             }}
             mode="outlined"
             activeOutlineColor="#0095f6"
             outlineColor="#e9ecef"
             textAlign="right"
             autoCapitalize="none"
-            contentStyle={{ fontFamily: "Rubik-Regular" }}
+            contentStyle={{ fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular" }}
           />
 
           <TextInput
@@ -359,7 +359,7 @@ export default function ConfigureAccount() {
             style={{ 
               width: "100%", 
               marginBottom: 15,
-              fontFamily: "Rubik-Regular"
+              fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"
             }}
             mode="outlined"
             activeOutlineColor="#0095f6"
@@ -368,7 +368,7 @@ export default function ConfigureAccount() {
             numberOfLines={3}
             textAlign="right"
             verticalAlign='middle'
-            contentStyle={{ fontFamily: "Rubik-Regular" }}
+            contentStyle={{ fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular" }}
             placeholder="اكتب نبذة مختصرة عن نفسك..."
           />
 
@@ -387,7 +387,7 @@ export default function ConfigureAccount() {
               <Text style={{
                 textAlign: "center",
                 color: '#dc3545',
-                fontFamily: "Rubik-Regular",
+                fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular",
                 fontSize: 14,
               }}>
                 {error}
@@ -412,7 +412,7 @@ export default function ConfigureAccount() {
           >
             <Text style={{ 
               color: "white",
-              fontFamily: "Rubik-Medium",
+              fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
               fontSize: 16
             }}>
               {loading ? "جاري الحفظ..." : checkingUsername ? "جاري التحقق من اسم المستخدم..." : "حفظ البيانات"}

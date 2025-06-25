@@ -339,7 +339,7 @@ export default function Post({ postID, image, video, content, title, link, creat
           { user?.verified && (
             <SealCheck size={14} color="#0095f6" weight="fill" />
           )}
-          <Text style={{fontSize: 16, fontFamily: "Rubik-Medium",  textAlign: "left", fontWeight: 'bold'}}>{user?.name}</Text>
+          <Text style={{fontSize: 16, fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",  textAlign: "left", fontWeight: 'bold'}}>{user?.name}</Text>
         </View>
         <Text style={{fontSize: 10,  marginTop: 0, color: "gray"}}>
           {createdAt ? (() => {
@@ -373,7 +373,7 @@ export default function Post({ postID, image, video, content, title, link, creat
         <Pressable onPress={() => router.push({ pathname: "/postDetails", params: { id: postID } })}>
           <Text style={{
             fontSize: 16,
-            fontFamily: "Rubik-Medium",
+            fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
             textAlign: "right",
             marginBottom: 4,
           }}>{title}</Text>
@@ -382,7 +382,7 @@ export default function Post({ postID, image, video, content, title, link, creat
               fontSize: 14,
               marginBottom: 4,
               textAlign: "right",
-              fontFamily: "Rubik-Regular",
+              fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular",
             }}>
               {content.length > 100 ? (
                 <>

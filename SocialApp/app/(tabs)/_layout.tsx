@@ -1,4 +1,3 @@
-import { useFonts } from 'expo-font';
 import { Tabs } from "expo-router";
 import { Compass, House, PlayCircle, PlusCircle, User } from "phosphor-react-native";
 
@@ -8,7 +7,7 @@ export default function TabsLayout() {
     <Tabs screenOptions={({ route }) => ({
       tabBarActiveTintColor: '#0095f6',
       tabBarInactiveTintColor: "#8E8E93",
-      tabBarLabelStyle: { fontSize: 12, fontFamily: 'Rubik-Regular' },
+      tabBarLabelStyle: { fontSize: 12, fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular' },
       tabBarStyle: {
         backgroundColor: route.name === 'watch' ? 'black' : 'white',
         borderTopColor: route.name === 'watch' ? 'black' : '#eee',

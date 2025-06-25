@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
   title: {
     color: '#fff',
     fontSize: 14,
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     marginBottom: 8,
   },
    iconContainer: {
@@ -695,10 +695,10 @@ const styles = StyleSheet.create({
   followButtonText: {
       color: '#fff',
       fontSize: 14,
-      fontFamily: 'Rubik-Bold'
+      fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold'
   },
   followingButtonText: {
       color: '#fff',
-      fontFamily: 'Rubik-Regular'
+      fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
 });

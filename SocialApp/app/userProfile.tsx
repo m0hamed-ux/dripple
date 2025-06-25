@@ -251,7 +251,7 @@ export default function UserProfile() {
 const styles = StyleSheet.create({
   usernameTop: {
     fontSize: 18,
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
     color: '#222',
     textAlign: 'center',
     marginTop: 16,
@@ -277,13 +277,13 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 16,
-    fontFamily: 'Rubik-Bold',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
     color: '#222',
   },
   statLabel: {
     fontSize: 12,
     color: '#888',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   infoSection: {
     alignItems: 'flex-end',
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   bio: {
     fontSize: 13,
     color: '#222',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     marginBottom: 2,
     textAlign: 'right',
     width: '100%',
@@ -328,6 +328,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     flex: 1,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
+  },
+  signOutBtnText: {
+    color: '#222',
+    textAlign: "center",
+    fontSize: 14,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   postsSection: {
     width: '100%',
@@ -338,7 +345,7 @@ const styles = StyleSheet.create({
   noPosts: {
     fontSize: 14,
     color: '#888',
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     textAlign: 'center',
     marginTop: 16,
   },

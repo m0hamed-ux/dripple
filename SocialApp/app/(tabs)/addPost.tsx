@@ -266,7 +266,8 @@ export default function AppPost() {
             textAlign: 'right',
             marginTop: 10,
             marginBottom: 0,
-            marginRight: 2
+            marginRight: 2,
+            fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
           }}>
             الحد الأقصى لحجم الصورة أو الفيديو هو 50 ميغابايت
           </Text>

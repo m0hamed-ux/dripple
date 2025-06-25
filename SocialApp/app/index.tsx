@@ -1,12 +1,12 @@
-import { Text, View } from "react-native";
 import { useFonts } from 'expo-font';
-import { useRouter, useSegments } from "expo-router";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { Text, View } from "react-native";
 import { useAuth } from "../lib/auth";
 
 export default function Home() {
     const [fontsLoaded] = useFonts({
-        'logoFont': require('../assets/fonts/Rubik-LightItalic.ttf'),
+        'logoFont': require('../assets/fonts/ArbFONTS-Al-Jazeera-Arabic-Bold.ttf'),
     });
     const router = useRouter();
     const {user, isLoadingUser} = useAuth();
@@ -42,7 +42,7 @@ export default function Home() {
                 fontSize: 24,
                 width: "100%",
                 textAlign: "center",
-                fontFamily: "Rubik-Medium",
+                fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
                 color: "white",
                 height: 100,
             }}>tribblebook</Text>

@@ -32,7 +32,8 @@
           "image": "./assets/images/appIcon.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#ffffff",
+          "preventAutoHide": false
         }
       ],
       "expo-font",

@@ -3,7 +3,6 @@ import { useAuth } from "@/lib/auth";
 import { PostType, StoryType, UserType } from "@/types/database.type";
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
-import { Bell, ChatTeardrop } from "phosphor-react-native";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Models, Query } from "react-native-appwrite";
@@ -205,12 +204,14 @@ export default function Home() {
     >
       <View style={styles.view}>
         <View id="header" style={{width: "100%", paddingHorizontal: 10, paddingTop: 10, paddingBottom: 0, display: "flex", flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between"}}>
-          <Text style={{
+            <Text style={{
             fontSize: 24,
-            fontFamily: "Rubik-Medium",
+            fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
             marginBottom: 0,
             textAlign: "right",
-          }}>الصفحة الرئيسية</Text>
+            }}>
+            {currentUserProfile ? `مرحباً بك ${currentUserProfile.name}` : 'مرحباً بك'}
+            </Text>
             <View style={{display: "flex", flexDirection: "row-reverse", gap: 10, alignItems: "center"}}>
               
             </View>
@@ -289,8 +290,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    
     color: "#666",
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   errorContainer: {
     flex: 1,
@@ -301,16 +302,16 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    
     color: "#ff4444",
     textAlign: "center",
     marginBottom: 20,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   retryText: {
     fontSize: 16,
-    
     color: "#0095f6",
     textDecorationLine: "underline",
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   emptyState: {
     flex: 1,
@@ -320,8 +321,8 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
-    
     color: "#666",
     textAlign: "center",
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   }
 });

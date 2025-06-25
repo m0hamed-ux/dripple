@@ -1,6 +1,5 @@
 import { StoryType } from '@/types/database.type';
 import { ResizeMode, Video } from 'expo-av';
-import { useFonts } from 'expo-font';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageBackground, Modal, Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Models } from 'react-native-appwrite';
@@ -270,7 +269,7 @@ const styles = StyleSheet.create({
   username: {
     marginTop: 4,
     fontSize: 12,
-    fontFamily: 'Rubik-Regular',
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     maxWidth: 70,
     textAlign: 'center',
   },
@@ -334,7 +333,7 @@ const styles = StyleSheet.create({
   },
   storyUsername: {
     color: 'white',
-    
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
     fontSize: 14,
   },
   storyNavigation: {
@@ -365,7 +364,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: "25%",
     color: 'white',
     fontSize: 14,
-    
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     lineHeight: 32,

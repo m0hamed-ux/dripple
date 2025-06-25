@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { CaretLeft, ChatTeardrop, Heart, SealCheck } from "phosphor-react-native";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
 import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, usersCollectionId } from "../lib/appwrite";
@@ -238,12 +238,12 @@ export default function PostDetails() {
                 <View style={{ marginBottom: 0, alignContent: "center", display: "flex", flexDirection: "row", alignItems: "center", gap: 4 }}>
                     {community && (
                         <>
-                            <Text style={{ fontSize: 14, color: "gray" }}>{community.name}</Text>
+                            <Text style={{ fontSize: 14, color: "gray", fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular' }}>{community.name}</Text>
                             <CaretLeft size={14} color="gray" weight="fill" />
                         </>
                     )}
                     {user?.verified && <SealCheck size={14} color="#0095f6" weight="fill" />}
-                    <Text style={{ fontSize: 16, fontFamily: "Rubik-Medium", textAlign: "left", fontWeight: 'bold' }}>{user?.name}</Text>
+                    <Text style={{ fontSize: 16, fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold", textAlign: "left" }}>{user?.name}</Text>
                 </View>
                 <Text style={{ fontSize: 10, marginTop: 0, color: "gray" }}>
                     {createdAt ? (() => {
@@ -268,11 +268,11 @@ export default function PostDetails() {
                             if (diffDays < 10) return `قبل ${diffDays} أيام`;
                         }
                         return created.toLocaleDateString("ar-EG", { year: 'numeric', month: 'long', day: 'numeric' });
-                    })() : "تاريخ غير معروف"}
+                    })() : <Text style={{ fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular' }}>تاريخ غير معروف</Text>}
                 </Text>
-                <Text style={{ fontSize: 16, fontFamily: "Rubik-Medium", textAlign: "right", marginBottom: 4 }}>{title}</Text>
-                {content && content.length > 0 && <Text style={{ fontSize: 14, marginBottom: 4, textAlign: "right", fontFamily: "Rubik-Regular" }}>{content}</Text>}
-                {link && <Text style={{ fontSize: 14, marginBottom: 4, color: "#007AFF", textDecorationLine: "underline", textDecorationColor: "#007AFF", textAlign: "right" }}>{link}</Text>}
+                <Text style={{ fontSize: 16, fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold", textAlign: "right", marginBottom: 4 }}>{title}</Text>
+                {content && content.length > 0 && <Text style={{ fontSize: 14, marginBottom: 4, textAlign: "right", fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular" }}>{content}</Text>}
+                {link && <Text style={{ fontSize: 14, marginBottom: 4, color: "#007AFF", textDecorationLine: "underline", textDecorationColor: "#007AFF", textAlign: "right", fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular' }}>{link}</Text>}
 
                 {typeof image === "string" && (
                     <Pressable onPress={() => openImageModal(image)}>

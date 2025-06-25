@@ -255,17 +255,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 17,
     letterSpacing: 0.2,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
   },
   errorText: {
     color: '#ff4444',
     fontSize: 15,
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
   successText: {
     color: '#009f4d',
     fontSize: 15,
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
   },
 });

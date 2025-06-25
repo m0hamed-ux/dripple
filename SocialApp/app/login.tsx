@@ -59,7 +59,7 @@ export default function Login() {
                 justifyContent: "center",
                 backgroundColor: "white",
             }}>
-                <Text style={{color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right", fontFamily: "Rubik-Medium"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
+                <Text style={{color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right", fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 <Text style={{
                     
                     textAlign: "right",
@@ -69,7 +69,7 @@ export default function Login() {
                     marginTop: 0,
                     color: "gray",
                     fontSize: 14,
-                    fontFamily: "Rubik-Regular"
+                    fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"
                 }}>
                     {isSignUp ? "مرحبًا بك مرة أخرى! أدخل بياناتك لتسجيل الدخول." : "مرحبًا بك في تطبيقنا! أدخل بياناتك لإنشاء حساب جديد."}
                 </Text>
@@ -80,7 +80,7 @@ export default function Login() {
                     mode="outlined"
                     activeOutlineColor="#0095f6"
                     textAlign="center"
-                    style={{ width: "100%", marginBottom: 10, fontFamily: "Rubik-Regular"}}
+                    style={{ width: "100%", marginBottom: 10, fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"}}
                     onChangeText={(text) => (setEmail(text), setError(null))}
                 />
                 <TextInput
@@ -90,7 +90,7 @@ export default function Login() {
                     secureTextEntry={true}
                     mode="outlined"
                     activeOutlineColor="#0095f6"
-                    style={{ width: "100%", marginBottom: 15, fontFamily: "Rubik-Regular"}}
+                    style={{ width: "100%", marginBottom: 15, fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"}}
                     onChangeText={(text) => (setPassword(text), setError(null))}
                 />
                 {!isSignUp && (
@@ -101,7 +101,7 @@ export default function Login() {
                         secureTextEntry={true}
                         mode="outlined"
                         activeOutlineColor="#0095f6"
-                        style={{ width: "100%", marginBottom: 15, fontFamily: "Rubik-Regular"}}
+                        style={{ width: "100%", marginBottom: 15, fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"}}
                         onChangeText={(text) => (setConfirmPassword(text), setError(null))}
                     />
                 )}
@@ -118,12 +118,12 @@ export default function Login() {
                 onPress={() => {
                     handleAuth();
                 }}>
-                    <Text style={{ color: "white", fontFamily: "Rubik-Regular"}}>{isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
+                    <Text style={{ color: "white", fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"}}>{isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 </Button>
                 {/* Privacy and Terms Notice */}
                 {!isSignUp && (
                   <Text style={{
-                    fontFamily: "Rubik-Regular",
+                    fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular",
                     textAlign: "center",
                     color: "gray",
                     fontSize: 13,
@@ -135,7 +135,7 @@ export default function Login() {
                 )}
                 {error && (
                     <Text style={{
-                        fontFamily: "Rubik-Regular",
+                        fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular",
                         textAlign: "center",
                         color: '#0095f6',
                         marginBottom: 10,
@@ -146,13 +146,13 @@ export default function Login() {
                     }}>{error}</Text>
                 )}
                 <Text style={{
-                    fontFamily: "Rubik-Regular",
+                    fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular",
                     textAlign: "center",
                     marginTop: 40,
                 }}>
                     {isSignUp ? "ليس لديك حساب؟ " : "لديك حساب بالفعل؟ "}
                     <Text
-                        style={{ color: "#0095f6", fontFamily: "Rubik-Regular"}}
+                        style={{ color: "#0095f6", fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Regular"}}
                         onPress={() => setIsSignUp(!isSignUp)}
                     >
                         {isSignUp ? "إنشاء حساب" : "تسجيل الدخول"}
