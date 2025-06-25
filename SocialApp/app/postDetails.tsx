@@ -216,6 +216,7 @@ export default function PostDetails() {
     const { images: image, video, content, title, link, $createdAt: createdAt, community, user } = post;
 
     const renderPostContent = () => (
+        
         <View style={{
             width: "auto",
             display: "flex",
@@ -381,6 +382,14 @@ export default function PostDetails() {
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, backgroundColor: 'white' }} keyboardVerticalOffset={80}>
             <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+                    <Pressable onPress={() => router.back()} style={{ marginRight: 12 }}>
+                        <CaretLeft size={28} color="#0095f6" weight="bold" />
+                    </Pressable>
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#0095f6', flex: 1, textAlign: 'right' }}>
+                        تفاصيل المنشور
+                    </Text>
+                </View>
                 {renderPostContent()}
                 {renderComments()}
             </ScrollView>

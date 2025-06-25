@@ -1,8 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
-import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import { ID, Query } from 'react-native-appwrite';
 import { Button, Text, TextInput } from 'react-native-paper';
 import { databaseId, databases, imagesStorageId, storage, usersCollectionId } from '../lib/appwrite';
@@ -14,15 +13,12 @@ export default function ConfigureAccount() {
   const [bio, setBio] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [username, setUsername] = useState('');
-  const [namePlaceholder, setNamePlaceholder] = useState('');
-  const [usernamePlaceholder, setUsernamePlaceholder] = useState('');
-  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [userDocumentId, setUserDocumentId] = useState<string | null>(null);
   const router = useRouter();
-
 
   // Fetch user document for initial values
   useEffect(() => {
@@ -35,10 +31,11 @@ export default function ConfigureAccount() {
         ]);
         if (res.documents.length > 0) {
           const doc = res.documents[0];
-          setNamePlaceholder(doc.name || '');
-          setUsernamePlaceholder(doc.username || '');
+          setName(doc.name || '');
+          setUsername(doc.username || '');
           setBio(doc.bio || '');
           setProfileImage(doc.userProfile || null);
+          setUserDocumentId(doc.$id);
         }
       } catch (e) {
         // ignore
@@ -70,54 +67,48 @@ export default function ConfigureAccount() {
   };
 
   const uploadImage = async (image: any) => {
-    await storage.createFile(
-      imagesStorageId,
-      ID.unique(),
-      {
-        uri: image.uri,
-        name: image.name,
-        type: image.mimeType,
-        size: image.size,
-      }
-    ).then((response) => {
+    try {
+      const response = await storage.createFile(
+        imagesStorageId,
+        ID.unique(),
+        {
+          uri: image.uri,
+          name: image.name,
+          type: image.mimeType,
+          size: image.size,
+        }
+      );
       const url = `https://nyc.cloud.appwrite.io/v1/storage/buckets/${imagesStorageId}/files/${response.$id}/view?project=6854346600203ab09001&mode=admin`;
       setProfileImage(url);
+    } catch (error) {
+      setError('حدث خطأ أثناء رفع الصورة');
+    } finally {
       setIsImageLoading(false);
-    });
+    }
   }
 
-  // Username availability check
-  const checkUsernameAvailability = async (value: string) => {
-    if (!value) {
-      setIsUsernameAvailable(null);
-      return;
-    }
-    setCheckingUsername(true);
+  // Helper function to get the original username
+  const getOriginalUsername = async () => {
+    if (!userDocumentId) return null;
     try {
-      const res = await databases.listDocuments(
+      const res = await databases.getDocument(
         databaseId,
         usersCollectionId,
-        [
-          // Appwrite query for equality
-          // Exclude current user from check
-          // @ts-ignore
-          Query.equal('username', value),
-        ]
+        userDocumentId
       );
-      // If found and not the current user, it's taken
-      if (res.documents.length === 0 || (res.documents.length === 1 && res.documents[0].$id === user?.$id)) {
-        setIsUsernameAvailable(true);
-      } else {
-        setIsUsernameAvailable(false);
-      }
+      return res.username || null;
     } catch (e) {
-      setIsUsernameAvailable(null);
-    } finally {
-      setCheckingUsername(false);
+      console.error('Error getting original username:', e);
+      return null;
     }
   };
 
   const handleSave = async () => {
+    if (!userDocumentId) {
+      setError('لم يتم العثور على بيانات المستخدم - يرجى إعادة تسجيل الدخول');
+      return;
+    }
+    
     if (!name) {
       setError('يرجى إدخال الاسم');
       return;
@@ -126,25 +117,68 @@ export default function ConfigureAccount() {
       setError('يرجى إدخال اسم المستخدم');
       return;
     }
-    if (name.length < 5 || name.length > 20) {
-      setError('يجب أن يكون الاسم بين 5 و 20 حرفًا');
+    if (name.length < 3 || name.length > 30) {
+      setError('يجب أن يكون الاسم بين 3 و 30 حرفًا');
       return;
     }
-    if (username.length < 5 || username.length > 20) {
-      setError('يجب أن يكون اسم المستخدم بين 5 و 20 حرفًا');
+    if (username.length < 3 || username.length > 20) {
+      setError('يجب أن يكون اسم المستخدم بين 3 و 20 حرفًا');
       return;
     }
-    if (isUsernameAvailable === false) {
-      setError('اسم المستخدم غير متاح');
+    if (/[A-Z]/.test(username)) {
+      setError('اسم المستخدم يجب أن يحتوي على أحرف صغيرة فقط');
       return;
     }
+    if (!/^[a-z0-9_]+$/.test(username)) {
+      setError('اسم المستخدم يجب أن يحتوي على أحرف صغيرة وأرقام وشرطة سفلية فقط');
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
     try {
-      await databases.updateDocument(
+      // Check if username has changed
+      const originalUsername = await getOriginalUsername();
+      const usernameChanged = originalUsername !== username;
+
+      // Only validate username availability if it has changed
+      if (usernameChanged) {
+        setCheckingUsername(true);
+        
+        // Check database availability
+        const res = await databases.listDocuments(
+          databaseId,
+          usersCollectionId,
+          [
+            // @ts-ignore
+            Query.equal('username', username),
+          ]
+        );
+        
+        const existingUser = res.documents.find(doc => doc.username === username);
+        if (existingUser && existingUser.$id !== userDocumentId) {
+          setError('اسم المستخدم غير متاح');
+          setLoading(false);
+          setCheckingUsername(false);
+          return;
+        }
+        
+        setCheckingUsername(false);
+      }
+
+      console.log('Saving user data:', {
+        name,
+        bio,
+        userProfile: profileImage,
+        username,
+        userDocumentId
+      });
+
+      const result = await databases.updateDocument(
         databaseId,
         usersCollectionId,
-        user?.$id!,
+        userDocumentId,
         {
           name,
           bio,
@@ -152,119 +186,240 @@ export default function ConfigureAccount() {
           username,
         }
       );
+      
+      console.log('Save successful:', result);
       router.replace('/(tabs)/home');
     } catch (e) {
-      setError('حدث خطأ أثناء حفظ البيانات' + e);
+      console.error('Save error details:', e);
+      console.error('Error type:', typeof e);
+      console.error('Error message:', e instanceof Error ? e.message : 'Unknown error');
+      
+      // Provide more specific error messages based on the error type
+      if (e instanceof Error) {
+        if (e.message.includes('permission')) {
+          setError('خطأ في الصلاحيات - تأكد من تسجيل الدخول');
+        } else if (e.message.includes('not found')) {
+          setError('لم يتم العثور على المستخدم - يرجى إعادة تسجيل الدخول');
+        } else if (e.message.includes('unique')) {
+          setError('اسم المستخدم مستخدم بالفعل');
+        } else {
+          setError(`حدث خطأ أثناء حفظ البيانات: ${e.message}`);
+        }
+      } else {
+        setError('حدث خطأ غير متوقع أثناء حفظ البيانات');
+      }
     } finally {
       setLoading(false);
+      setCheckingUsername(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <View style={{
-        padding: 20,
-        height: "100%",
-        justifyContent: "center",
-        backgroundColor: "white",
-      }}>
-        <Text style={{ color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}>إعداد الحساب</Text>
-        <Text style={{
-          
-          textAlign: "right",
-          marginBottom: 5,
-          paddingLeft: "20%",
-          paddingRight: 5,
-          marginTop: 0,
-          color: "gray",
-          fontSize: 14,
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={{
+          padding: 20,
+          minHeight: "100%",
+          justifyContent: "center",
+          backgroundColor: "white",
         }}>
-          أدخل بياناتك لإكمال إعداد الحساب.
-        </Text>
-        <TouchableOpacity onPress={pickImage} style={{alignSelf: 'center', marginBottom: 24}} disabled={isImageLoading}>
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={{ width: 100, height: 100, borderRadius: 50 }} />
-          ) : isImageLoading ? (
-            <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: '#eee', alignItems: 'center', justifyContent: 'center' }}>
-              <ActivityIndicator size="small" color="#0095f6" />
-            </View>
-          ) : (
-            <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: '#eee', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#aaa', fontFamily: 'Rubik-Regular' }}>اختر صورة</Text>
+          <Text style={{ 
+            color: "#0095f6", 
+            fontSize: 26, 
+            width: "100%", 
+            textAlign: "right",
+            fontFamily: "Rubik-Medium",
+            marginBottom: 5
+          }}>
+            إعداد الحساب
+          </Text>
+          <Text style={{
+            textAlign: "right",
+            marginBottom: 30,
+            paddingLeft: "20%",
+            paddingRight: 5,
+            marginTop: 0,
+            color: "gray",
+            fontSize: 14,
+            fontFamily: "Rubik-Regular"
+          }}>
+            أدخل بياناتك لإكمال إعداد الحساب.
+          </Text>
+
+          {/* Profile Image Section */}
+          <View style={{ alignItems: 'center', marginBottom: 30 }}>
+            <TouchableOpacity 
+              onPress={pickImage} 
+              disabled={isImageLoading}
+              style={{
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: '#f8f9fa',
+                borderWidth: 3,
+                borderColor: '#0095f6',
+                borderStyle: 'dashed',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}
+            >
+              {profileImage ? (
+                <Image 
+                  source={{ uri: profileImage }} 
+                  style={{ width: 114, height: 114, borderRadius: 57 }} 
+                />
+              ) : isImageLoading ? (
+                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <ActivityIndicator size="large" color="#0095f6" />
+                  <Text style={{ 
+                    color: '#0095f6', 
+                    fontFamily: 'Rubik-Regular',
+                    fontSize: 12,
+                    marginTop: 5
+                  }}>
+                    جاري الرفع...
+                  </Text>
+                </View>
+              ) : (
+                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ 
+                    color: '#0095f6', 
+                    fontFamily: 'Rubik-Regular',
+                    fontSize: 14,
+                    textAlign: 'center'
+                  }}>
+                    اختر صورة
+                  </Text>
+                  <Text style={{ 
+                    color: '#6c757d', 
+                    fontFamily: 'Rubik-Regular',
+                    fontSize: 12,
+                    textAlign: 'center',
+                    marginTop: 5
+                  }}>
+                    الملف الشخصي
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Form Fields */}
+          <TextInput
+            label="الاسم"
+            value={name}
+            onChangeText={(text) => {
+              setName(text);
+              setError(null);
+            }}
+            style={{ 
+              width: "100%", 
+              marginBottom: 15,
+              fontFamily: "Rubik-Regular"
+            }}
+            mode="outlined"
+            activeOutlineColor="#0095f6"
+            outlineColor="#e9ecef"
+            textAlign="right"
+            contentStyle={{ fontFamily: "Rubik-Regular" }}
+          />
+
+          <TextInput
+            label="اسم المستخدم"
+            value={username}
+            onChangeText={(text) => {
+              const lowercaseText = text.toLowerCase();
+              setUsername(lowercaseText);
+              setError(null);
+            }}
+            style={{ 
+              width: "100%", 
+              marginBottom: 10,
+              fontFamily: "Rubik-Regular"
+            }}
+            mode="outlined"
+            activeOutlineColor="#0095f6"
+            outlineColor="#e9ecef"
+            textAlign="right"
+            autoCapitalize="none"
+            contentStyle={{ fontFamily: "Rubik-Regular" }}
+          />
+
+          <TextInput
+            label="نبذة عنك"
+            value={bio}
+            onChangeText={(text) => {
+              setBio(text);
+              setError(null);
+            }}
+            style={{ 
+              width: "100%", 
+              marginBottom: 15,
+              fontFamily: "Rubik-Regular"
+            }}
+            mode="outlined"
+            activeOutlineColor="#0095f6"
+            outlineColor="#e9ecef"
+            multiline
+            numberOfLines={3}
+            textAlign="right"
+            verticalAlign='middle'
+            contentStyle={{ fontFamily: "Rubik-Regular" }}
+            placeholder="اكتب نبذة مختصرة عن نفسك..."
+          />
+
+          
+
+          {/* Error Display */}
+          {error && (
+            <View style={{
+              backgroundColor: "#fff5f5",
+              borderWidth: 1,
+              borderColor: "#fed7d7",
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 20,
+            }}>
+              <Text style={{
+                textAlign: "center",
+                color: '#dc3545',
+                fontFamily: "Rubik-Regular",
+                fontSize: 14,
+              }}>
+                {error}
+              </Text>
             </View>
           )}
-        </TouchableOpacity>
-        <TextInput
-          label="الاسم"
-          value={name}
-          onChangeText={setName}
-          placeholder={namePlaceholder}
-          style={{ width: "100%", marginBottom: 10}}
-          mode="outlined"
-          activeOutlineColor="#0095f6"
-          textAlign="right"
-        />
-        <TextInput
-          label="نبذة عنك"
-          value={bio}
-          onChangeText={setBio}
-          style={{ width: "100%", marginBottom: 15}}
-          mode="outlined"
-          activeOutlineColor="#0095f6"
-          multiline
-          numberOfLines={3}
-          textAlign="right"
-        />
-        <TextInput
-          label="اسم المستخدم"
-          value={username}
-          onChangeText={text => {
-            setUsername(text);
-            setIsUsernameAvailable(null);
-          }}
-          onBlur={() => checkUsernameAvailability(username)}
-          placeholder={usernamePlaceholder}
-          style={{ width: "100%", marginBottom: 10}}
-          mode="outlined"
-          activeOutlineColor="#0095f6"
-          textAlign="right"
-          autoCapitalize="none"
-        />
-        {checkingUsername && (
-          <Text style={{ color: '#0095f6', fontFamily: 'Rubik-Regular', marginBottom: 5, textAlign: 'right' }}>جاري التحقق من توفر اسم المستخدم...</Text>
-        )}
-        {isUsernameAvailable === false && (
-          <Text style={{ color: 'red', fontFamily: 'Rubik-Regular', marginBottom: 5, textAlign: 'right' }}>اسم المستخدم غير متاح</Text>
-        )}
-        {isUsernameAvailable === true && (
-          <Text style={{ color: 'green', fontFamily: 'Rubik-Regular', marginBottom: 5, textAlign: 'right' }}>اسم المستخدم متاح</Text>
-        )}
-        {error && <Text style={{
-          
-          textAlign: "center",
-          color: '#0095f6',
-          marginBottom: 10,
-          padding: 10,
-          backgroundColor: "#ffe6e6",
-          borderRadius: 5,
-          marginTop: 10,
-        }}>{error}</Text>}
-        <Button
-          mode="contained"
-          onPress={handleSave}
-          loading={loading}
-          style={{
-            width: "100%",
-            backgroundColor: "#0095f6",
-            borderRadius: 5,
-            borderBlockColor: "#0095f6",
-            borderWidth: 2,
-            marginTop: 0,
-          }}
-        >
-          <Text style={{ color: "white"}}>حفظ</Text>
-        </Button>
-      </View>
+
+          {/* Save Button */}
+          <Button
+            mode="contained"
+            onPress={handleSave}
+            loading={loading || checkingUsername}
+            disabled={loading || checkingUsername}
+            style={{
+              width: "100%",
+              backgroundColor: "#0095f6",
+              borderRadius: 8,
+              marginTop: 10,
+              paddingVertical: 8,
+            }}
+            contentStyle={{ paddingVertical: 8 }}
+          >
+            <Text style={{ 
+              color: "white",
+              fontFamily: "Rubik-Medium",
+              fontSize: 16
+            }}>
+              {loading ? "جاري الحفظ..." : checkingUsername ? "جاري التحقق من اسم المستخدم..." : "حفظ البيانات"}
+            </Text>
+          </Button>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 } 

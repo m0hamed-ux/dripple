@@ -1,11 +1,12 @@
-import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { account, commentsCollectionId, databaseId, databases, followersCollectionId, likesCollectionId, postsCollectionId, usersCollectionId } from "@/lib/appwrite";
 import { PostType, UserType } from "@/types/database.type";
 import { useFocusEffect } from "@react-navigation/native";
 import { ResizeMode, Video } from 'expo-av';
+import { useRouter } from "expo-router";
 import { ChatTeardrop, Heart, Play, SealCheck } from "phosphor-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Query } from "react-native-appwrite";
+import { ID, Query } from "react-native-appwrite";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 60;
@@ -33,6 +34,10 @@ export default function Watch() {
   const [showHeart, setShowHeart] = useState<{ [index: number]: boolean }>({});
   const heartAnim = useRef<{ [index: number]: Animated.Value }>({});
   const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
+  const [isFollowingMap, setIsFollowingMap] = useState<{ [userId: string]: boolean }>({});
+  const [followDocIdMap, setFollowDocIdMap] = useState<{ [userId: string]: string | null }>({});
+  const [followLoadingMap, setFollowLoadingMap] = useState<{ [userId: string]: boolean }>({});
 
   useFocusEffect(
     React.useCallback(() => {
@@ -57,6 +62,31 @@ export default function Watch() {
         const user = await account.get();
         currentUserId = user.$id;
       } catch {}
+
+      // Batch check follow status
+      if (currentUserId) {
+        const authorIds = [...new Set(videoPosts.map(p => p.user?.$id).filter(id => id && id !== currentUserId))] as string[];
+        if (authorIds.length > 0) {
+          try {
+            const followRes = await databases.listDocuments(databaseId, followersCollectionId, [
+              Query.equal('FollowerUser', currentUserId),
+              Query.equal('FollowedUser', authorIds)
+            ]);
+            const followingMap: { [userId: string]: boolean } = {};
+            const docIdMap: { [userId: string]: string | null } = {};
+            for (const doc of followRes.documents) {
+              const followedUserId = (doc.FollowedUser as UserType).$id ?? doc.FollowedUser;
+              followingMap[followedUserId] = true;
+              docIdMap[followedUserId] = doc.$id;
+            }
+            setIsFollowingMap(followingMap);
+            setFollowDocIdMap(docIdMap);
+          } catch (e) {
+            console.error("Error checking follow statuses:", e);
+          }
+        }
+      }
+
       for (const v of videoPosts) {
         try {
           // Likes count
@@ -131,7 +161,7 @@ export default function Watch() {
     setSendingComment(true);
     try {
       const user = await account.get();
-      await databases.createDocument(databaseId, commentsCollectionId, 'unique()', {
+      await databases.createDocument(databaseId, commentsCollectionId, ID.unique(), {
         posts: commentModal.postId,
         userID: user.$id,
         comment: newComment,
@@ -169,7 +199,7 @@ export default function Watch() {
         await databases.createDocument(
           databaseId,
           likesCollectionId,
-          'unique()',
+          ID.unique(),
           {
             userID: user.$id,
             posts: postId,
@@ -178,6 +208,50 @@ export default function Watch() {
       }
     } catch (error) {
       // Optionally revert UI if failed
+    }
+  };
+
+  const handleFollow = async (userId: string) => {
+    if (followLoadingMap[userId] || !currentUser || !userId) return;
+    setFollowLoadingMap(prev => ({ ...prev, [userId]: true }));
+    setIsFollowingMap(prev => ({ ...prev, [userId]: true }));
+
+    try {
+      const res = await databases.createDocument(
+        databaseId,
+        followersCollectionId,
+        ID.unique(),
+        { FollowerUser: currentUser.$id, FollowedUser: userId }
+      );
+      setFollowDocIdMap(prev => ({ ...prev, [userId]: res.$id }));
+    } catch (e) {
+      console.log("Error following", e)
+      setIsFollowingMap(prev => ({ ...prev, [userId]: false })); // revert
+    } finally {
+      setFollowLoadingMap(prev => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  const handleUnfollow = async (userId: string) => {
+    const followDocId = followDocIdMap[userId];
+    if (followLoadingMap[userId] || !followDocId) return;
+
+    setFollowLoadingMap(prev => ({ ...prev, [userId]: true }));
+    
+    const wasFollowing = isFollowingMap[userId];
+    const oldFollowDocId = followDocId;
+
+    setIsFollowingMap(prev => ({ ...prev, [userId]: false }));
+    setFollowDocIdMap(prev => ({ ...prev, [userId]: null }));
+
+    try {
+      await databases.deleteDocument(databaseId, followersCollectionId, oldFollowDocId);
+    } catch (e) {
+      console.log("Error unfollowing", e)
+      setIsFollowingMap(prev => ({ ...prev, [userId]: wasFollowing }));
+      setFollowDocIdMap(prev => ({ ...prev, [userId]: oldFollowDocId }));
+    } finally {
+      setFollowLoadingMap(prev => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -239,6 +313,9 @@ export default function Watch() {
     const isPaused = pausedVideos[index];
     const showHeartNow = showHeart[index];
     const heartScale = heartAnim.current[index] || new Animated.Value(0);
+    const isOwnVideo = currentUser && user && currentUser.$id === user.$id;
+    const isFollowing = user ? isFollowingMap[user.$id] : false;
+    const isFollowLoading = user ? followLoadingMap[user.$id] : false;
     return (
       <View style={styles.videoContainer}>
         <View style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
@@ -279,25 +356,72 @@ export default function Watch() {
         {/* Overlay UI */}
         <View style={styles.overlay} pointerEvents="box-none">
           {/* Right side icons */}
-          <View style={styles.rightIcons}>
-            <Pressable style={styles.iconButton} onPress={() => handleLike(item.$id)}>
-              <Heart size={32} color={userLiked[item.$id] ? '#fff' : '#fff'} weight={userLiked[item.$id] ? 'fill' : 'regular'} />
-              <Text style={styles.countText}>{likes[item.$id] || 0}</Text>
-            </Pressable>
-            <Pressable style={styles.iconButton} onPress={() => openCommentModal(item.$id)}>
-              <ChatTeardrop size={32} color="#fff" weight="regular" />
-              <Text style={styles.countText}>{comments[item.$id] || 0}</Text>
-            </Pressable>
-          </View>
+            <View style={styles.rightIcons}>
+              <Pressable style={styles.iconButton} onPress={() => handleLike(item.$id)}>
+              <View style={styles.iconContainer}>
+                {/* Shadow (fake background icon) */}
+                <Heart
+                size={42}
+                color="rgba(0, 0, 0, 0.25)"
+                style={styles.shadowIcon}
+                />
+                {/* Actual icon */}
+                <Heart
+                size={40}
+                color={userLiked[item.$id] ? '#ff4757' : '#fff'}
+                weight={userLiked[item.$id] ? 'fill' : 'regular'}
+                />
+              </View>
+              {/* Shadow for text */}
+              <Text style={[styles.countText, { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }]}>
+                {likes[item.$id] || 0}
+              </Text>
+              </Pressable>
+              <Pressable style={styles.iconButton} onPress={() => openCommentModal(item.$id)}>
+              <View style={styles.iconContainer}>
+                {/* Shadow (fake background icon) */}
+                <ChatTeardrop
+                size={42}
+                color="rgba(0, 0, 0, 0.25)"
+                style={styles.shadowIcon}
+                />
+                {/* Actual icon */}
+                <ChatTeardrop
+                size={40}
+                color="#fff"
+                weight="regular"
+                />
+              </View>
+              {/* Shadow for text */}
+              <Text style={[styles.countText, { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }]}>
+                {comments[item.$id] || 0}
+              </Text>
+              </Pressable>
+            </View>
           {/* Bottom left info */}
           <View style={styles.bottomInfo}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
               {user && user.userProfile && (
-                <Image source={{ uri: user.userProfile }} style={styles.avatar} />
+                <Pressable onPress={() => router.push({ pathname: '/userProfile', params: { id: user?.$id } })}>
+                  <Image source={{ uri: user.userProfile }} style={styles.avatar} />
+                </Pressable>
               )}
-              <Text style={styles.userName}>{user ? user.name : 'مستخدم'}</Text>
+              <Pressable onPress={() => router.push({ pathname: '/userProfile', params: { id: user?.$id } })}>
+                <Text style={[styles.userName, { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }]}>{user ? user.name : 'مستخدم'}</Text>
+              </Pressable>
+              {!isOwnVideo && user && (
+                <Pressable
+                  style={[styles.followButton, isFollowing && styles.followingButton]}
+                  onPress={() => (isFollowing ? handleUnfollow(user.$id) : handleFollow(user.$id))}
+                  disabled={isFollowLoading}
+                >
+                  <Text style={[styles.followButtonText, isFollowing && styles.followingButtonText]}>
+                    {isFollowLoading ? '...' : isFollowing ? 'يتابع' : 'متابعة'}
+                  </Text>
+                </Pressable>
+              )}
             </View>
-            <Text style={styles.title}>{item.title}</Text>
+            <Text numberOfLines={1} style={[styles.title, { textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }]}>{item.title}</Text>
           </View>
         </View>
         {/* Comment Modal */}
@@ -458,15 +582,14 @@ export default function Watch() {
       keyExtractor={item => item.$id}
       renderItem={renderItem}
       showsVerticalScrollIndicator={false}
-      snapToInterval={VIDEO_HEIGHT}
-      snapToAlignment="start"
-      decelerationRate="normal"
+      pagingEnabled
+      decelerationRate="fast"
       onMomentumScrollEnd={onMomentumScrollEnd}
       getItemLayout={(_, index) => ({ length: VIDEO_HEIGHT, offset: VIDEO_HEIGHT * index, index })}
       style={{ backgroundColor: 'black' }}
       scrollEventThrottle={16}
       initialNumToRender={3}
-      windowSize={3}
+      windowSize={5}
       refreshing={refreshing}
       onRefresh={onRefresh}
     />
@@ -525,7 +648,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     bottom: 10,
-    maxWidth: '70%',
+    maxWidth: '100%',
   },
   avatar: {
     width: 36,
@@ -542,8 +665,40 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 14,
     fontFamily: 'Rubik-Regular',
     marginBottom: 8,
+  },
+   iconContainer: {
+    position: 'relative',
+    width: 40,
+    height: 40,
+  },
+  shadowIcon: {
+    position: 'absolute',
+    top: 1, // vertical shadow offset
+    left: -1, // horizontal shadow offset
+  },
+  followButton: {
+    borderWidth: 1.5,
+    borderColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginLeft: 12,
+    backgroundColor: 'rgba(0,0,0,0.2)'
+  },
+  followingButton: {
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  followButtonText: {
+      color: '#fff',
+      fontSize: 14,
+      fontFamily: 'Rubik-Bold'
+  },
+  followingButtonText: {
+      color: '#fff',
+      fontFamily: 'Rubik-Regular'
   },
 });

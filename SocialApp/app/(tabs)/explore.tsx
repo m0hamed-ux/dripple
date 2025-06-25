@@ -9,9 +9,9 @@ import { ActivityIndicator, FlatList, Image, ImageBackground, Pressable, ScrollV
 import { Query } from 'react-native-appwrite';
 
 const DEFAULT_COMMUNITY_IMAGE = require("../../assets/images/partial-react-logo.png");
-
+const router = useRouter();
 const TrendingPostCard = ({ item }: { item: PostType }) => {
-  const router = useRouter();
+  
   const mediaUri = item.video 
     ? item.video
     : item.images 
@@ -66,7 +66,7 @@ const TrendingPostCard = ({ item }: { item: PostType }) => {
 const CommunityCard = ({ item }: { item: communityType }) => {
   const imageUrl = item.image ? item.image : null;
   return (
-      <View style={styles.communityCard}>
+      <Pressable onPress={() => router.push({ pathname: "/community", params: { id: item.$id } })} style={styles.communityCard}>
           <View style={{ flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
                   {imageUrl ? (
@@ -85,7 +85,7 @@ const CommunityCard = ({ item }: { item: communityType }) => {
           <Text style={styles.communityDescription} numberOfLines={2}>
               {item.description || `اكتشف عالم ${item.name} وانضم إلى مجتمعنا اليوم!`}
           </Text>
-      </View>
+      </Pressable>
   );
 };
 
@@ -218,11 +218,11 @@ export default function Explore() {
                       keyExtractor={item => item.$id}
                       horizontal
                       renderItem={({ item }) => (
-                        <View style={styles.userCard}>
+                        <Pressable onPress={() => router.push({ pathname: "/userProfile", params: { id: item.$id } })} style={styles.userCard}>
                           <Image source={{ uri: item.userProfile }} style={styles.avatar} />
                           <Text style={styles.userName}>{item.name}</Text>
                           <Text style={styles.userUsername}>@{item.username}</Text>
-                        </View>
+                        </Pressable>
                       )}
                       showsHorizontalScrollIndicator={false}
                       contentContainerStyle={styles.horizontalList}

@@ -16,12 +16,16 @@ export interface UserType extends Models.Document {
     userProfile?: string;
     bio?: string;
     verified?: boolean;
+    followers?: Array<UserType>;
+    following?: Array<UserType>;
+    communities?: Array<communityType>;
 }
 export interface communityType extends Models.Document {
     name: string;
     image?: string;
     banner?: string;
     desciption?: string;
+    memebers?: Array<UserType>;
 }
 export interface LikeType extends Models.Document {
     postID: string;

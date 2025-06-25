@@ -91,12 +91,16 @@ export default function Profile() {
           <Text style={styles.statLabel}>المنشورات</Text>
         </View>
         <View style={styles.statsCol}>
-          <Text style={styles.statNumber}>0</Text>
+          <Text style={styles.statNumber}>
+            {profile?.followers ? profile.followers.length : 0}
+          </Text>
           <Text style={styles.statLabel}>المتابِعون</Text>
         </View>
         <View style={styles.statsCol}>
-          <Text style={styles.statNumber}>0</Text>
-          <Text style={styles.statLabel}>المتابَعون</Text>
+          <Text style={styles.statNumber}>
+            {profile?.following ? profile.following.length : 0}
+          </Text>
+            <Text style={styles.statLabel}>تتابِع</Text>
         </View>
       </View>
       {/* Name, bio, links */}

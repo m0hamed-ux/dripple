@@ -33,6 +33,9 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
             <Stack.Screen name="addStory" options={{ headerShown: false }}/>
             <Stack.Screen name="configureAccount" options={{ headerShown: false }}/>
+            <Stack.Screen name="postDetails" options={{ headerShown: false }}/>
+            <Stack.Screen name="community" options={{ headerShown: false }}/>
+            <Stack.Screen name="userProfile" options={{ headerShown: false }}/>
           </Stack>
         </SafeAreaView>
       </Auth>

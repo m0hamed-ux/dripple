@@ -38,6 +38,8 @@ export const likesCollectionId = '685811b2000adce1ae1f';
 export const commentsCollectionId = '68581e190019c6286fbc';
 export const storiesCollectionId = '68587954003c15fa31ea';
 export const communitiesCollectionId = '68592878003110928a09';
+export const followersCollectionId = '685adf8200242cf814f2';
+export const communityMembersCollectionId = '685bc7230017860f8612';
 
 // Wrapper functions with error handling
 export const safeListDocuments = async (databaseId: string, collectionId: string, queries?: any[]) => {

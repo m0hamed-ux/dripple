@@ -44,7 +44,7 @@ export function Auth({children}: {children: React.ReactNode}){
                 ID.unique(),
                 email,
                 password,
-                "Name"
+                "user"
             );
             await signIn(email, password);
             await account.updatePrefs({
@@ -94,7 +94,6 @@ export function Auth({children}: {children: React.ReactNode}){
             setUser(null);
         } catch (error) {
             console.error('Sign out error:', error);
-            // Even if sign out fails, clear the local user state
             setUser(null);
         }
     }

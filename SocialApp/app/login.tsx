@@ -60,7 +60,7 @@ export default function Login() {
                 justifyContent: "center",
                 backgroundColor: "white",
             }}>
-                <Text style={{color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
+                <Text style={{color: "#0095f6", fontSize: 26, width: "100%", textAlign: "right", fontFamily: "Rubik-Medium"}}> {isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 <Text style={{
                     
                     textAlign: "right",
@@ -70,6 +70,7 @@ export default function Login() {
                     marginTop: 0,
                     color: "gray",
                     fontSize: 14,
+                    fontFamily: "Rubik-Regular"
                 }}>
                     {isSignUp ? "مرحبًا بك مرة أخرى! أدخل بياناتك لتسجيل الدخول." : "مرحبًا بك في تطبيقنا! أدخل بياناتك لإنشاء حساب جديد."}
                 </Text>
@@ -80,7 +81,7 @@ export default function Login() {
                     mode="outlined"
                     activeOutlineColor="#0095f6"
                     textAlign="center"
-                    style={{ width: "100%", marginBottom: 10}}
+                    style={{ width: "100%", marginBottom: 10, fontFamily: "Rubik-Regular"}}
                     onChangeText={(text) => (setEmail(text), setError(null))}
                 />
                 <TextInput
@@ -90,7 +91,7 @@ export default function Login() {
                     secureTextEntry={true}
                     mode="outlined"
                     activeOutlineColor="#0095f6"
-                    style={{ width: "100%", marginBottom: 15}}
+                    style={{ width: "100%", marginBottom: 15, fontFamily: "Rubik-Regular"}}
                     onChangeText={(text) => (setPassword(text), setError(null))}
                 />
                 {!isSignUp && (
@@ -101,13 +102,13 @@ export default function Login() {
                         secureTextEntry={true}
                         mode="outlined"
                         activeOutlineColor="#0095f6"
-                        style={{ width: "100%", marginBottom: 15}}
+                        style={{ width: "100%", marginBottom: 15, fontFamily: "Rubik-Regular"}}
                         onChangeText={(text) => (setConfirmPassword(text), setError(null))}
                     />
                 )}
                 {isSignUp && (
                     <Text style={{
-                        
+                        fontFamily: "Rubik-Regular",
                         textAlign: "right",
                         marginBottom: 10,
                         color: "#0095f6",
@@ -130,11 +131,11 @@ export default function Login() {
                 onPress={() => {
                     handleAuth();
                 }}>
-                    <Text style={{ color: "white"}}>{isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
+                    <Text style={{ color: "white", fontFamily: "Rubik-Regular"}}>{isSignUp ? "تسجيل الدخول" : "إنشاء حساب"}</Text>
                 </Button>
                 {error && (
                     <Text style={{
-                        
+                        fontFamily: "Rubik-Regular",
                         textAlign: "center",
                         color: '#0095f6',
                         marginBottom: 10,
@@ -145,13 +146,13 @@ export default function Login() {
                     }}>{error}</Text>
                 )}
                 <Text style={{
-                    
+                    fontFamily: "Rubik-Regular",
                     textAlign: "center",
                     marginTop: 40,
                 }}>
                     {isSignUp ? "ليس لديك حساب؟ " : "لديك حساب بالفعل؟ "}
                     <Text
-                        style={{ color: "#0095f6" }}
+                        style={{ color: "#0095f6", fontFamily: "Rubik-Regular"}}
                         onPress={() => setIsSignUp(!isSignUp)}
                     >
                         {isSignUp ? "إنشاء حساب" : "تسجيل الدخول"}

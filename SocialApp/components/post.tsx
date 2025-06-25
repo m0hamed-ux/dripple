@@ -254,7 +254,7 @@ export default function Post({ postID, image, video, content, title, link, creat
         paddingLeft: 10,
       }}
     >
-      <View id="avatarFrame"
+      <Pressable onPress={() => router.push({ pathname: "/userProfile", params: { id: user?.$id } })} id="avatarFrame"
         style={{
           width: "20%",
           alignItems: "center",
@@ -269,7 +269,7 @@ export default function Post({ postID, image, video, content, title, link, creat
             overflow: "hidden",
           }}
         />
-      </View>
+      </Pressable>
       <View id="contentFrame" style={{
         flex: 1,
         alignItems: "flex-end",
@@ -343,11 +343,13 @@ export default function Post({ postID, image, video, content, title, link, creat
               fontFamily: "Rubik-Regular",
             }}>
               {content.length > 100 ? (
-              <>
-                {content.slice(0, 100) + "..."}
-                <Text style={{ color: "#0095f6", fontWeight: "bold" }}>  عرض المزيد</Text>
-              </>
-              ) : content}
+                <>
+                  <Text>{content.slice(0, 100) + "..."}</Text>
+                  <Text style={{ color: "#0095f6", fontWeight: "bold" }}>  عرض المزيد</Text>
+                </>
+              ) : (
+                <Text>{content}</Text>
+              )}
             </Text>
           )}
         </Pressable>
@@ -599,17 +601,27 @@ export default function Post({ postID, image, video, content, title, link, creat
                   {comments.map((comment, idx) => (
                     <View key={comment.$id || idx}>
                       <View style={{ flexDirection: 'row-reverse', alignItems: 'flex-start', marginBottom: 12 }}>
-                        <Image
-                          source={{ uri: comment.userID && typeof comment.userID === 'object' && comment.userID.userProfile ? comment.userID.userProfile : undefined }}
-                          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#eee', marginLeft: 10 }}
-                        />
+                        <Pressable
+                          onPress={() => router.push({ pathname: "/userProfile", params: { id: typeof comment.userID === 'object' ? comment.userID.$id : comment.userID } })}
+                        >
+                          <Image
+                            source={{ uri: comment.userID && typeof comment.userID === 'object' && comment.userID.userProfile ? comment.userID.userProfile : undefined }}
+                            style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#eee', marginLeft: 10 }}
+                          />
+                        </Pressable>
                         <View style={{ flex: 1, justifyContent: "center" }}>
                           <View style={{ display:"flex", flexDirection:"row-reverse", gap: 5, alignContent:"center", alignItems:"center" }}>
                             <View style={{ display: "flex", flexDirection: "row", alignItems: "center", gap : 2}}>
                               { comment.userID && comment.userID.verified && (
                                 <SealCheck size={14} color="#0095f6" weight="fill" />
                               )}
-                              <Text style={{ fontWeight: 'bold', fontSize: 14 }}>{typeof comment.userID === 'object' ? comment.userID.name || comment.userID.username : comment.userID} </Text>
+                              <Pressable
+                                onPress={() => router.push({ pathname: "/userProfile", params: { id: typeof comment.userID === 'object' ? comment.userID.$id : comment.userID } })}
+                              >
+                                <Text style={{ fontWeight: 'bold', fontSize: 14 }}>
+                                  {typeof comment.userID === 'object' ? comment.userID.name || comment.userID.username : comment.userID}
+                                </Text>
+                              </Pressable>
                             </View>
                             <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10, verticalAlign: "middle" }}>{comment.$createdAt ? (() => {
                               const now = new Date();
@@ -640,8 +652,6 @@ export default function Post({ postID, image, video, content, title, link, creat
                             })() : "تاريخ غير معروف"}</Text>
                           </View>
                           <View style={{ flexDirection: 'row-reverse', alignItems: 'center', marginTop: 2 }}>
-                            
-                            
                             {/* <Text style={{ fontSize: 10, color: 'gray', marginLeft: 10 }}>3 إعجابات</Text> */}
                             {/* <Text style={{ fontSize: 10, color: '#888' }}>رد</Text> */}
                           </View>
