@@ -131,7 +131,7 @@ export default function Profile() {
                 <Feather name="shield" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
                 <Text style={styles.menuText}>الخصوصية والشروط</Text>
               </Pressable>
-              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer(); alert('تغيير كلمة المرور قادم قريباً'); }}>
+              <Pressable style={styles.drawerMenuItem} onPress={() => { closeDrawer();  router.push('/editPassword'); }}>
                 <Feather name="lock" size={20} color="#0095f6" style={styles.drawerMenuIcon} />
                 <Text style={styles.menuText}>تغيير كلمة المرور</Text>
               </Pressable>

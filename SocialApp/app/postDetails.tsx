@@ -1,10 +1,12 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { CaretLeft, ChatTeardrop, Heart, SealCheck } from "phosphor-react-native";
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
-import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, usersCollectionId } from "../lib/appwrite";
+import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, safeDeleteDocument, usersCollectionId } from "../lib/appwrite";
+import { sendCommentNotification, sendLikeNotification } from "../lib/notifications";
 import { PostType, UserType } from "../types/database.type";
 
 export default function PostDetails() {
@@ -30,6 +32,8 @@ export default function PostDetails() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [imageModalVisible, setImageModalVisible] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [actionMenuVisible, setActionMenuVisible] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const screenWidth = Dimensions.get('window').width;
     const contentWidth = screenWidth - 20 - (screenWidth * 0.2); // Matching post.tsx width calculation
     const router = useRouter();
@@ -131,6 +135,11 @@ export default function PostDetails() {
                         posts: postID,
                     }
                 );
+                
+                // Send notification to post owner if it's not their own post
+                if (post && currentUser && post.user.userID !== currentUser.userID) {
+                    await sendLikeNotification(post.user, currentUser.name || currentUser.username, postID);
+                }
             } else { // Previously liked, so we are unliking now
                 const response = await databases.listDocuments(
                     databaseId,
@@ -196,12 +205,35 @@ export default function PostDetails() {
                     comment: newComment,
                 }
             );
+            
+            // Send notification to post owner if it's not their own post
+            if (post && currentUser && post.user.userID !== currentUser.userID) {
+                await sendCommentNotification(post.user, currentUser.name || currentUser.username, postID, newComment);
+            }
+            
             setNewComment("");
             fetchComments();
         } catch (e) {
             // Optionally show error
         } finally {
             setSendingComment(false);
+        }
+    };
+
+    // Helper: is current user the post writer?
+    const isPostWriter = currentUser && post && (currentUser.userID === post.user.userID);
+
+    // Delete post handler
+    const handleDeletePost = async () => {
+        setDeleting(true);
+        try {
+            await safeDeleteDocument(databaseId, postsCollectionId, postID);
+            setActionMenuVisible(false);
+            router.back();
+        } catch (e) {
+            // Optionally show error
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -226,8 +258,15 @@ export default function PostDetails() {
             borderBottomWidth: 1,
             marginTop: 4,
             paddingLeft: 10,
-            backgroundColor: 'white'
+            backgroundColor: 'white',
+            position: 'relative'
         }}>
+            {/* Post action menu trigger (only for post writer) */}
+            {isPostWriter && (
+                <Pressable onPress={() => setActionMenuVisible(true)} style={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}>
+                    <Text style={{ fontSize: 20, color: '#222' }}>⋮</Text>
+                </Pressable>
+            )}
             <View id="avatarFrame" style={{ width: "20%", alignItems: "center" }}>
                 <Image
                     source={{ uri: user?.userProfile }}
@@ -403,6 +442,56 @@ export default function PostDetails() {
                     <Image source={{ uri: selectedImage || undefined }} style={styles.fullscreenImage} resizeMode="contain" />
                 </View>
             </Modal>
+
+            {/* Post Action Modal */}
+            <Modal
+                visible={actionMenuVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setActionMenuVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setActionMenuVisible(false)}>
+                    <View style={styles.menuModal}>
+                        <View style={styles.menuHeader}>
+                            <Text style={styles.menuTitle}>خيارات المنشور</Text>
+                        </View>
+                        <Pressable 
+                            style={styles.menuItem} 
+                            onPress={() => {
+                                setActionMenuVisible(false);
+                                router.push({ pathname: "/editPost", params: { id: postID } });
+                            }}
+                        >
+                            <View style={styles.menuItemContent}>
+                                <Ionicons name="create-outline" size={20} color="#0095f6" />
+                                <Text style={[styles.menuText, { color: '#0095f6' }]}>تعديل المنشور</Text>
+                            </View>
+                        </Pressable>
+                        <Pressable 
+                            style={styles.menuItem} 
+                            onPress={handleDeletePost} 
+                            disabled={deleting}
+                        >
+                            <View style={styles.menuItemContent}>
+                                <Ionicons name="trash-outline" size={20} color="#d00" />
+                                <Text style={[styles.menuText, { color: '#d00' }]}>
+                                    {deleting ? 'جاري الحذف...' : 'حذف المنشور'}
+                                </Text>
+                            </View>
+                        </Pressable>
+                        <View style={styles.menuDivider} />
+                        <Pressable 
+                            style={styles.menuItem} 
+                            onPress={() => setActionMenuVisible(false)}
+                        >
+                            <View style={styles.menuItemContent}>
+                                <Ionicons name="close-outline" size={20} color="#666" />
+                                <Text style={[styles.menuText, { color: '#666' }]}>إلغاء</Text>
+                            </View>
+                        </Pressable>
+                    </View>
+                </Pressable>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }
@@ -457,5 +546,40 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    menuModal: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 16,
+    },
+    menuItem: {
+        padding: 12,
+    },
+    menuText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    menuHeader: {
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    menuTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    menuItemContent: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+    },
+    menuDivider: {
+        height: 1,
+        backgroundColor: '#eee',
+        marginVertical: 12,
     },
 });

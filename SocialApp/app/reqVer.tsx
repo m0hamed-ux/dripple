@@ -3,7 +3,9 @@ import { ShieldCheck, XCircle } from 'phosphor-react-native';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { ID, Query } from 'react-native-appwrite';
-import { account, databaseId, imagesStorageId, safeCreateDocument, safeListDocuments, storage, verificationReqCollectionId } from '../lib/appwrite';
+import { account, databaseId, imagesStorageId, safeCreateDocument, safeListDocuments, storage, usersCollectionId, verificationReqCollectionId } from '../lib/appwrite';
+import { sendVerificationNotification } from '../lib/notifications';
+import { UserType } from '../types/database.type';
 
 const statusColors = {
   pending: '#f7b731',
@@ -15,6 +17,7 @@ const ReqVer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [existingReq, setExistingReq] = useState<any>(null);
   const [fullName, setFullName] = useState('');
   const [idCardImage, setIdCardImage] = useState<string | null>(null);
@@ -28,6 +31,17 @@ const ReqVer = () => {
       try {
         const user = await account.get();
         setUserId(user.$id);
+        
+        // Fetch current user profile
+        const userRes = await safeListDocuments(
+          databaseId,
+          usersCollectionId,
+          [Query.equal('userID', user.$id)]
+        );
+        if (userRes && userRes.documents && userRes.documents.length > 0) {
+          setCurrentUser(userRes.documents[0] as UserType);
+        }
+        
         // Check for existing verification request
         const res = await safeListDocuments(
           databaseId,
@@ -110,6 +124,12 @@ const ReqVer = () => {
           fullName,
         }
       );
+      
+      // Send notification to the user
+      if (currentUser) {
+        await sendVerificationNotification(currentUser, 'pending');
+      }
+      
       setExistingReq({ status: 'pending', idCardImage, fullName });
     } catch (e: any) {
       setError(e.message || 'حدث خطأ أثناء إرسال الطلب');

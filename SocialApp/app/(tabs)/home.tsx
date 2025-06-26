@@ -1,6 +1,7 @@
-import { databaseId, postsCollectionId, safeListDocuments, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { databaseId, notificationsCollectionId, postsCollectionId, safeListDocuments, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth";
-import { PostType, StoryType, UserType } from "@/types/database.type";
+import { NotificationType, PostType, StoryType, UserType } from "@/types/database.type";
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,6 +26,7 @@ export default function Home() {
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   const scrollRef = useRef(null);
   const router = useRouter();
 
@@ -36,6 +38,32 @@ export default function Home() {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  };
+
+  const fetchNotificationCount = async () => {
+    if (!authUser) return;
+    
+    try {
+      const response = await safeListDocuments(
+        databaseId,
+        notificationsCollectionId,
+        [
+          Query.orderDesc('$createdAt'),
+          Query.limit(100)
+        ]
+      );
+      
+      // Filter notifications for the current user and count unviewed ones
+      const userNotifications = response.documents.filter(
+        (notification: any) => notification.user && notification.user.userID === authUser.$id
+      ) as NotificationType[];
+      
+      const unviewedCount = userNotifications.filter(notification => !notification.isViewed).length;
+      setNotificationCount(unviewedCount);
+    } catch (error) {
+      console.error('Error fetching notification count:', error);
+      setNotificationCount(0);
+    }
   };
 
   const fetchCurrentUserProfile = async () => {
@@ -120,7 +148,8 @@ export default function Home() {
       await Promise.all([
         fetchCurrentUserProfile(),
         fetchPosts(),
-        fetchStories()
+        fetchStories(),
+        fetchNotificationCount()
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -145,7 +174,8 @@ export default function Home() {
       await Promise.all([
         fetchCurrentUserProfile(),
         fetchPosts(),
-        fetchStories()
+        fetchStories(),
+        fetchNotificationCount()
       ]);
     } catch (error) {
       console.error('Error refreshing data:', error);
@@ -166,11 +196,14 @@ export default function Home() {
 
   useFocusEffect(
     React.useCallback(() => {
-      // Do nothing on focus
+      // Refresh notification count when screen comes into focus
+      if (authUser) {
+        fetchNotificationCount();
+      }
       return () => {
         setActivePostId(null); // Pause all videos on blur
       };
-    }, [])
+    }, [authUser])
   );
 
   // Show loading state
@@ -213,33 +246,60 @@ export default function Home() {
             {currentUserProfile ? `مرحباً بك ${currentUserProfile.name}` : 'مرحباً بك'}
             </Text>
             <View style={{display: "flex", flexDirection: "row-reverse", gap: 10, alignItems: "center"}}>
-              
+              <View style={{ position: 'relative' }}>
+                <Ionicons
+                name="notifications-outline"
+                size={28}
+                color="#0095f6"
+                style={{ marginLeft: 8 }}
+                onPress={() => router.push('/notification')}
+                />
+                {notificationCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
         </View>
         <View style={{ width: "100%", marginBottom: 10, paddingBottom: 0 }}>
-          <ScrollView
+            <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
               padding: 10,
               paddingBottom: 0,
+              flexDirection: 'row', // RTL direction
             }}
-          >
+            style={{ direction: 'rtl' }} // For web, ignored on native
+            >
             {currentUserProfile && (
               <MyStory
-                user={currentUserProfile}
-                userStories={currentUserStories}
-                onAddStory={handleAddStory}
+              user={currentUserProfile}
+              userStories={currentUserStories}
+              onAddStory={handleAddStory}
               />
             )}
             {groupedStories.map(({ user, stories }) => (
               <Story
-                key={user.$id}
-                user={user}
-                stories={stories}
+              key={user.$id}
+              user={user}
+              stories={stories}
               />
             ))}
-          </ScrollView>
+            </ScrollView>
+        </View>
+        <View style={{ width: "100%", paddingHorizontal: 10, paddingBottom: 10 }}>
+          <Text style={{
+            fontSize: 20,
+            fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
+            marginBottom: 10,
+            textAlign: "right",
+          }}>
+            المنشورات
+          </Text>
         </View>
         <View id="postView" style={{
           width: "100%",
@@ -324,5 +384,23 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Regular',
-  }
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#ff4757',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold',
+    textAlign: 'center',
+  },
 });

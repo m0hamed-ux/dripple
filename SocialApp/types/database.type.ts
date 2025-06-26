@@ -19,6 +19,7 @@ export interface UserType extends Models.Document {
     followers?: Array<UserType>;
     following?: Array<UserType>;
     communities?: Array<communityType>;
+    notifications?: Array<NotificationType>;
 }
 export interface communityType extends Models.Document {
     name: string;
@@ -44,10 +45,23 @@ export interface StoryType extends Models.Document {
     createdAt?: string;
     video?: string;
     text?: string;
+    views?: Array<UserType>;
 }
 export interface verificationReq extends Models.Document {
     userID: UserType;
     status: 'pending' | 'approved' | 'rejected';
     idCardImage?: string;
     fullName: string;
+}
+export interface NotificationType extends Models.Document {
+    user?: string;
+    targetType?: 'user' | 'post' | 'none';
+    targetID?: string;
+    content?: string;
+    isViewed?: boolean;
+    type?: 'like' | 'comment' | 'follow' | 'verification' ;
+}
+export interface storiesView extends Models.Document {
+    stories: StoryType;
+    user: UserType;
 }

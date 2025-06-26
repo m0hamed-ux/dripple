@@ -1,4 +1,5 @@
 import { databaseId, databases, followersCollectionId, postsCollectionId, storiesCollectionId, usersCollectionId } from "@/lib/appwrite";
+import { sendFollowNotification } from "@/lib/notifications";
 import { PostType, StoryType, UserType } from "@/types/database.type";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -115,6 +116,25 @@ export default function UserProfile() {
         { FollowerUser: authUser.$id, FollowedUser: id }
       );
       setFollowDocId(res.$id);
+      
+      // Send notification to the followed user
+      if (profile) {
+        // Get current user's profile to get their name
+        try {
+          const currentUserRes = await databases.listDocuments(
+            databaseId,
+            usersCollectionId,
+            [Query.equal('userID', authUser.$id)]
+          );
+          const currentUserProfile = currentUserRes.documents[0] as UserType;
+          if (currentUserProfile) {
+            await sendFollowNotification(profile, currentUserProfile.name || currentUserProfile.username, currentUserProfile.userID);
+          }
+        } catch (error) {
+          console.error('Error getting current user profile for notification:', error);
+        }
+      }
+      
       await fetchProfile(); // re-sync count
     } catch (e) {
       console.log("Error following", e)

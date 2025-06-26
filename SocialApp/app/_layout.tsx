@@ -43,6 +43,9 @@ export default function RootLayout() {
             <Stack.Screen name="appInfo" options={{ headerShown: false }}/>
             <Stack.Screen name="privacy_terms" options={{ headerShown: false }}/>
             <Stack.Screen name="reqVer" options={{ headerShown: false }}/>
+            <Stack.Screen name="notification" options={{ headerShown: false }}/>
+            <Stack.Screen name="editPost" options={{ headerShown: false }}/>
+            <Stack.Screen name="editPassword" options={{ headerShown: false }}/>
           </Stack>
         </SafeAreaView>
       </Auth>

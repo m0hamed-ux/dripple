@@ -1,10 +1,12 @@
-import { StoryType } from '@/types/database.type';
+import { StoryType, UserType } from '@/types/database.type';
 import { ResizeMode, Video } from 'expo-av';
-import { Plus, Trash } from 'phosphor-react-native';
+import { Eye, Plus, Trash } from 'phosphor-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageBackground, Modal, Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Models } from 'react-native-appwrite';
-import { databaseId, safeDeleteDocument, storiesCollectionId } from '../lib/appwrite';
+import { Models, Query } from 'react-native-appwrite';
+import { databaseId, getStoryViewers, safeDeleteDocument, safeListDocuments, storiesCollectionId, storiesViewsCollectionId, trackStoryView } from '../lib/appwrite';
+import { useAuth } from '../lib/auth';
+import StoryViews from './storyViews';
 
 interface MyStoryProps {
   user: Models.Document;
@@ -14,6 +16,7 @@ interface MyStoryProps {
 
 export default function MyStory({ user, userStories, onAddStory }: MyStoryProps) {
 
+  const { user: authUser } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
@@ -21,9 +24,41 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
   const [actionMenuVisible, setActionMenuVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteSingle, setDeleteSingle] = useState(false);
+  const [viewsModalVisible, setViewsModalVisible] = useState(false);
+  const [storyViewers, setStoryViewers] = useState<UserType[]>([]);
+  const [loadingViewers, setLoadingViewers] = useState(false);
+  const [hasViewedStory, setHasViewedStory] = useState(false);
 
   const hasStories = userStories && userStories.length > 0;
   const { userProfile: userimage, name: username } = user;
+
+  // Check if user has viewed their own story (unusual but possible)
+  const checkIfUserViewedStory = async () => {
+    if (!authUser || !userStories || userStories.length === 0) return;
+    
+    try {
+      const currentStory = userStories[currentStoryIndex];
+      const views = await safeListDocuments(
+        databaseId,
+        storiesViewsCollectionId,
+        [
+          Query.equal('stories', currentStory.$id),
+          Query.equal('user', authUser.$id)
+        ]
+      );
+      
+      setHasViewedStory(views.documents.length > 0);
+    } catch (error) {
+      console.error('Error checking if user viewed story:', error);
+      setHasViewedStory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userStories && userStories.length > 0) {
+      checkIfUserViewedStory();
+    }
+  }, [userStories, currentStoryIndex, authUser]);
 
   const handlePress = () => {
     if (hasStories) {
@@ -92,11 +127,61 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
     }
   };
 
+  const handleShowViews = async () => {
+    if (!userStories || !authUser) return;
+    
+    setLoadingViewers(true);
+    try {
+      const currentStory = userStories[currentStoryIndex];
+      const viewers = await getStoryViewers(currentStory.$id);
+      setStoryViewers(viewers);
+      setViewsModalVisible(true);
+    } catch (error) {
+      console.error('Error fetching story viewers:', error);
+    } finally {
+      setLoadingViewers(false);
+    }
+  };
+
+  // Fetch view count when story changes
+  const fetchViewCount = async () => {
+    if (!userStories || !authUser) return;
+    
+    try {
+      const currentStory = userStories[currentStoryIndex];
+      const viewers = await getStoryViewers(currentStory.$id);
+      setStoryViewers(viewers);
+    } catch (error) {
+      console.error('Error fetching view count:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (userStories && userStories.length > 0) {
+      fetchViewCount();
+    }
+  }, [currentStoryIndex, userStories]);
+
+  const handleStoryView = async () => {
+    if (!userStories || !authUser) return;
+    
+    const currentStory = userStories[currentStoryIndex];
+    // Only track view if it's not the user's own story
+    if (currentStory.userID.userID !== authUser.$id) {
+      await trackStoryView(currentStory.$id, authUser.$id);
+    }
+    // Update the viewed state
+    setHasViewedStory(true);
+  };
+
   useEffect(() => {
     if (modalVisible && hasStories) {
       progress.setValue(0);
       const currentStory = userStories![currentStoryIndex];
       const isVideo = currentStory.video && currentStory.video.length > 0;
+      
+      // Track story view when modal opens
+      handleStoryView();
       
       if (!isVideo) {
         Animated.timing(progress, {
@@ -129,7 +214,7 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
     <>
       <Pressable onPress={handlePress} onLongPress={handleLongPress}>
         <View style={styles.container}>
-          <View style={hasStories ? styles.hasStoriesBorder : styles.noStoriesBorder}>
+          <View style={[hasStories ? styles.hasStoriesBorder : styles.noStoriesBorder, hasViewedStory && styles.viewedStoryBorder]}>
             <View style={styles.storyFrame}>
               <Image source={{ uri: userimage }} style={styles.storyImage} />
             </View>
@@ -181,6 +266,14 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
         </Pressable>
       </Modal>
       
+      {/* Story Views Modal */}
+      <StoryViews
+        visible={viewsModalVisible}
+        onClose={() => setViewsModalVisible(false)}
+        viewers={storyViewers}
+        storyOwner={user as UserType}
+      />
+      
       {hasStories && (
         <Modal
           animationType="slide"
@@ -197,6 +290,7 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
                 <Trash size={28} color="#d00" weight="bold" />
               </Pressable>
             </View>
+            
             {isVideo ? (
               <View style={styles.videoContainer}>
                 <Video
@@ -274,6 +368,16 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
                     <Text style={styles.storyText}>{text}</Text>
                   </View>
                 )}
+                
+                {/* Show views icon at the bottom - always visible for own stories */}
+                <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 14, fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold', marginRight: 8 }}>
+                    {storyViewers.length}
+                  </Text>
+                  <Pressable onPress={handleShowViews} disabled={loadingViewers}>
+                    <Eye size={28} color="white" weight="bold" />
+                  </Pressable>
+                </View>
               </View>
             ) : (
               <ImageBackground source={{ uri: image }} style={styles.imageBackground} resizeMode="contain">
@@ -334,6 +438,16 @@ export default function MyStory({ user, userStories, onAddStory }: MyStoryProps)
                     <Text style={styles.storyText}>{text}</Text>
                   </View>
                 )}
+                
+                {/* Show views icon at the bottom - always visible for own stories */}
+                <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 14, fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold', marginRight: 8 }}>
+                    {storyViewers.length}
+                  </Text>
+                  <Pressable onPress={handleShowViews} disabled={loadingViewers}>
+                    <Eye size={28} color="white" weight="bold" />
+                  </Pressable>
+                </View>
               </ImageBackground>
             )}
           </SafeAreaView>
@@ -499,5 +613,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     lineHeight: 32,
+  },
+  viewedStoryBorder: {
+    borderColor: '#dbdbdb',
   },
 }); 

@@ -1,8 +1,12 @@
-import { StoryType } from '@/types/database.type';
+import { StoryType, UserType } from '@/types/database.type';
 import { ResizeMode, Video } from 'expo-av';
+import { Eye } from 'phosphor-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageBackground, Modal, Pressable, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { Models } from 'react-native-appwrite';
+import { Models, Query } from 'react-native-appwrite';
+import { databaseId, getStoryViewers, safeListDocuments, storiesViewsCollectionId, trackStoryView } from '../lib/appwrite';
+import { useAuth } from '../lib/auth';
+import StoryViews from './storyViews';
 
 interface StoryProps {
   user: Models.Document;
@@ -10,12 +14,15 @@ interface StoryProps {
 }
 
 export default function Story({ user, stories }: StoryProps) {
+  const { user: authUser } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
   const videoRef = useRef<Video>(null);
-
-
+  const [viewsModalVisible, setViewsModalVisible] = useState(false);
+  const [storyViewers, setStoryViewers] = useState<UserType[]>([]);
+  const [loadingViewers, setLoadingViewers] = useState(false);
+  const [hasViewedStory, setHasViewedStory] = useState(false);
 
   // Early return for empty stories
   if (!stories || stories.length === 0) {
@@ -28,6 +35,31 @@ export default function Story({ user, stories }: StoryProps) {
 
   const isVideo = video && video.length > 0;
   const hasText = text && text.length > 0;
+
+  // Check if user has viewed this story
+  const checkIfUserViewedStory = async () => {
+    if (!authUser) return;
+    
+    try {
+      const views = await safeListDocuments(
+        databaseId,
+        storiesViewsCollectionId,
+        [
+          Query.equal('stories', currentStory.$id),
+          Query.equal('user', authUser.$id)
+        ]
+      );
+      
+      setHasViewedStory(views.documents.length > 0);
+    } catch (error) {
+      console.error('Error checking if user viewed story:', error);
+      setHasViewedStory(false);
+    }
+  };
+
+  useEffect(() => {
+    checkIfUserViewedStory();
+  }, [currentStory.$id, authUser]);
 
   const handleNextStory = () => {
     if (currentStoryIndex < stories.length - 1) {
@@ -45,9 +77,60 @@ export default function Story({ user, stories }: StoryProps) {
     }
   };
 
+  const handleShowViews = async () => {
+    if (!authUser) return;
+    
+    setLoadingViewers(true);
+    try {
+      const currentStory = stories[currentStoryIndex];
+      const viewers = await getStoryViewers(currentStory.$id);
+      setStoryViewers(viewers);
+      setViewsModalVisible(true);
+    } catch (error) {
+      console.error('Error fetching story viewers:', error);
+    } finally {
+      setLoadingViewers(false);
+    }
+  };
+
+  // Fetch view count when story changes
+  const fetchViewCount = async () => {
+    if (!authUser) return;
+    
+    try {
+      const currentStory = stories[currentStoryIndex];
+      const viewers = await getStoryViewers(currentStory.$id);
+      setStoryViewers(viewers);
+    } catch (error) {
+      console.error('Error fetching view count:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (stories && stories.length > 0) {
+      fetchViewCount();
+    }
+  }, [currentStoryIndex, stories]);
+
+  const handleStoryView = async () => {
+    if (!authUser) return;
+    
+    const currentStory = stories[currentStoryIndex];
+    // Only track view if it's not the user's own story
+    if (currentStory.userID.userID !== authUser.$id) {
+      await trackStoryView(currentStory.$id, authUser.$id);
+      // Update the viewed state after tracking
+      setHasViewedStory(true);
+    }
+  };
+
   useEffect(() => {
     if (modalVisible) {
       progress.setValue(0);
+      
+      // Track story view when modal opens
+      handleStoryView();
+      
       if (!isVideo) {
         Animated.timing(progress, {
           toValue: 1,
@@ -74,7 +157,7 @@ export default function Story({ user, stories }: StoryProps) {
     <>
       <Pressable onPress={() => setModalVisible(true)}>
         <View style={styles.container}>
-          <View style={styles.storyBorder}>
+          <View style={[styles.storyBorder, hasViewedStory && styles.viewedStoryBorder]}>
             <View style={styles.storyFrame}>
               <Image source={{ uri: userimage }} style={styles.storyImage} />
             </View>
@@ -82,6 +165,15 @@ export default function Story({ user, stories }: StoryProps) {
           <Text numberOfLines={1} ellipsizeMode="tail" style={styles.username} >{username}</Text>
         </View>
       </Pressable>
+      
+      {/* Story Views Modal */}
+      <StoryViews
+        visible={viewsModalVisible}
+        onClose={() => setViewsModalVisible(false)}
+        viewers={storyViewers}
+        storyOwner={user as UserType}
+      />
+      
       <Modal
         animationType="slide"
         transparent={true}
@@ -168,6 +260,18 @@ export default function Story({ user, stories }: StoryProps) {
                   <Text style={styles.storyText}>{text}</Text>
                 </View>
               )}
+              
+              {/* Show views icon at the bottom - only for story owner */}
+              {authUser && currentStory.userID.userID === authUser.$id && (
+                <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 14, fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold', marginRight: 8 }}>
+                    {storyViewers.length}
+                  </Text>
+                  <Pressable onPress={handleShowViews} disabled={loadingViewers}>
+                    <Eye size={28} color="white" weight="bold" />
+                  </Pressable>
+                </View>
+              )}
             </View>
           ) : (
             <ImageBackground source={{ uri: image }} style={styles.imageBackground} resizeMode="contain">
@@ -228,6 +332,18 @@ export default function Story({ user, stories }: StoryProps) {
                   <Text style={styles.storyText}>{text}</Text>
                 </View>
               )}
+              
+              {/* Show views icon at the bottom - only for story owner */}
+              {authUser && currentStory.userID.userID === authUser.$id && (
+                <View style={{ position: 'absolute', bottom: 30, right: 20, zIndex: 10, flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ color: 'white', fontSize: 14, fontFamily: 'ArbFONTS-Al-Jazeera-Arabic-Bold', marginRight: 8 }}>
+                    {storyViewers.length}
+                  </Text>
+                  <Pressable onPress={handleShowViews} disabled={loadingViewers}>
+                    <Eye size={28} color="white" weight="bold" />
+                  </Pressable>
+                </View>
+              )}
             </ImageBackground>
           )}
         </SafeAreaView>
@@ -265,6 +381,9 @@ const styles = StyleSheet.create({
     borderColor: '#0095f6',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  viewedStoryBorder: {
+    borderColor: '#dbdbdb',
   },
   username: {
     marginTop: 4,

@@ -45,7 +45,7 @@ export default function Home() {
                 fontFamily: "ArbFONTS-Al-Jazeera-Arabic-Bold",
                 color: "white",
                 height: 100,
-            }}>tribblebook</Text>
+            }}>تريبل بوك</Text>
         </View>
     );
 }

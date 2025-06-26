@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Query } from "react-native-appwrite";
 import { account, commentsCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, safeDeleteDocument, usersCollectionId } from "../lib/appwrite";
+import { sendCommentNotification, sendLikeNotification } from "../lib/notifications";
 import { communityType, UserType } from "../types/database.type";
 
 
@@ -183,6 +184,11 @@ export default function Post({ postID, image, video, content, title, link, creat
             posts: postID,
           }
         );
+        
+        // Send notification to post owner if it's not their own post
+        if (user && currentUser && user.userID !== currentUser.userID) {
+          await sendLikeNotification(user, currentUser.name || currentUser.username, postID);
+        }
       } catch (error) {
         // Revert UI if failed
         setUserLiked(previousUserLiked);
@@ -225,17 +231,28 @@ export default function Post({ postID, image, video, content, title, link, creat
     if (!newComment.trim()) return;
     setSendingComment(true);
     try {
-      const user = await account.get();
+      const currentAuthUser = await account.get();
       await databases.createDocument(
         databaseId,
         commentsCollectionId,
         'unique()',
         {
           posts: postID,
-          userID: user.$id,
+          userID: currentAuthUser.$id,
           comment: newComment,
         }
       );
+      
+      // Send notification to post owner if it's not their own post
+      if (user && currentUser && user.userID !== currentUser.userID) {
+        try {
+          await sendCommentNotification(user, currentUser.name || currentUser.username, postID, newComment);
+          console.log('Comment notification sent successfully');
+        } catch (error) {
+          console.error('Error sending comment notification:', error);
+        }
+      }
+      
       setNewComment("");
       fetchComments();
     } catch (e) {
@@ -286,7 +303,7 @@ export default function Post({ postID, image, video, content, title, link, creat
         flexDirection: "row-reverse",
         padding: 2,
         borderBottomColor: "#E0E0E050",
-        borderBottomWidth: 1,
+        borderBottomWidth: 5,
         marginTop: 4,
         paddingLeft: 10,
       }}
@@ -761,11 +778,42 @@ export default function Post({ postID, image, video, content, title, link, creat
       >
         <Pressable style={styles.modalOverlay} onPress={() => setActionMenuVisible(false)}>
           <View style={styles.menuModal}>
-            <Pressable style={styles.menuItem} onPress={handleDeletePost} disabled={deleting}>
-              <Text style={[styles.menuText, { color: '#d00' }]}>{deleting ? 'جاري الحذف...' : 'حذف المنشور'}</Text>
+            <View style={styles.menuHeader}>
+              <Text style={styles.menuTitle}>خيارات المنشور</Text>
+            </View>
+            <Pressable 
+              style={styles.menuItem} 
+              onPress={() => {
+                setActionMenuVisible(false);
+                router.push({ pathname: "/editPost", params: { id: postID } });
+              }}
+            >
+              <View style={styles.menuItemContent}>
+                <Ionicons name="create-outline" size={20} color="#0095f6" />
+                <Text style={[styles.menuText, { color: '#0095f6' }]}>تعديل المنشور</Text>
+              </View>
             </Pressable>
-            <Pressable style={[styles.menuItem, { borderTopWidth: 1, borderTopColor: '#eee' }]} onPress={() => setActionMenuVisible(false)}>
-              <Text style={[styles.menuText, { color: '#d00' }]}>إلغاء</Text>
+            <Pressable 
+              style={styles.menuItem} 
+              onPress={handleDeletePost} 
+              disabled={deleting}
+            >
+              <View style={styles.menuItemContent}>
+                <Ionicons name="trash-outline" size={20} color="#d00" />
+                <Text style={[styles.menuText, { color: '#d00' }]}>
+                  {deleting ? 'جاري الحذف...' : 'حذف المنشور'}
+                </Text>
+              </View>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable 
+              style={styles.menuItem} 
+              onPress={() => setActionMenuVisible(false)}
+            >
+              <View style={styles.menuItemContent}>
+                <Ionicons name="close-outline" size={20} color="#666" />
+                <Text style={[styles.menuText, { color: '#666' }]}>إلغاء</Text>
+              </View>
             </Pressable>
           </View>
         </Pressable>
@@ -835,5 +883,24 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  menuHeader: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  menuTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  menuItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 12,
   },
 });

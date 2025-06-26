@@ -1,4 +1,5 @@
 import { account, communitiesCollectionId, communityMembersCollectionId, databaseId, databases, likesCollectionId, postsCollectionId, safeCreateDocument, safeListDocuments, usersCollectionId } from "@/lib/appwrite";
+import { sendCommunityJoinNotification } from "@/lib/notifications";
 import { communityType, PostType, UserType } from "@/types/database.type";
 import { ResizeMode, Video } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -234,6 +235,7 @@ export default function Explore() {
   }, [search]);
 
   const handleJoin = async (communityId: string) => {
+    if (!currentUserId) return;
     setJoinLoadingId(communityId);
     try {
       await safeCreateDocument(
@@ -242,6 +244,26 @@ export default function Explore() {
         ID.unique(),
         { user: currentUserId, community: communityId }
       );
+      
+      // Send notification to community admin
+      const community = communities.find(c => c.$id === communityId);
+      if (community && community.admin && currentUserId !== community.admin.userID) {
+        try {
+          // Get current user's profile
+          const currentUserRes = await safeListDocuments(
+            databaseId,
+            usersCollectionId,
+            [Query.equal('userID', currentUserId)]
+          );
+          const currentUserProfile = currentUserRes.documents[0] as UserType;
+          if (currentUserProfile) {
+            await sendCommunityJoinNotification(community.admin, currentUserProfile.name || currentUserProfile.username, community.name);
+          }
+        } catch (error) {
+          console.error('Error sending community join notification:', error);
+        }
+      }
+      
       setJoinedCommunityIds((prev) => [...prev, communityId]);
     } catch (e) {
       // Optionally show error
